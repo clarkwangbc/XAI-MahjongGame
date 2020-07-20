@@ -1,0 +1,13 @@
+*.sh
+.gradle
+.idea
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+/.externalNativeBuild
+app/obj/local/
+app/libs/armeabi-v7a/libMyGame.so
+

@@ -1,0 +1,90 @@
+apply plugin: 'com.android.application'
+
+android {
+    lintOptions {
+        disable 'MissingTranslation'
+        abortOnError false
+    }
+    signingConfigs {
+        debug {
+            storeFile file(RELEASE_STORE_FILE)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+            v2SigningEnabled false
+        }
+        release {
+            storeFile file(RELEASE_STORE_FILE)
+            storePassword RELEASE_STORE_PASSWORD
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+            v2SigningEnabled false
+        }
+    }
+
+    compileSdkVersion 26
+    buildToolsVersion '26.0.3'
+    defaultConfig {
+        applicationId "com.xiyoufang.mahjong"
+        minSdkVersion 19
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0.0"
+        multiDexEnabled true
+        proguardFiles "proguard-rules.pro"
+        ndk { abiFilters 'armeabi-v7a' }
+        externalNativeBuild {
+            ndkBuild {
+                targets 'MyGame'
+                arguments 'NDK_TOOLCHAIN_VERSION=clang'
+                arguments '-j' + Runtime.runtime.availableProcessors()
+            }
+        }
+    }
+
+    sourceSets.main {
+        java.srcDir "src"
+        res.srcDir "res"
+        manifest.srcFile "AndroidManifest.xml"
+        assets.srcDir "../../Resources"
+        jniLibs.srcDir "libs"
+    }
+
+    externalNativeBuild {
+        ndkBuild {
+            path "jni/Android.mk"
+        }
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+    }
+    buildTypes {
+        release {
+            debuggable false
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            externalNativeBuild {
+                ndkBuild {
+                    arguments 'NDK_DEBUG=0'
+                }
+            }
+        }
+
+        debug {
+            debuggable true
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+            externalNativeBuild {
+                ndkBuild {
+                    arguments 'NDK_DEBUG=1'
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
