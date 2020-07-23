@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -270,6 +271,12 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 	std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
 	CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
 	CCUserDefault::sharedUserDefault()->flush();
+
+	// 将数据保存至指定位置
+	std::ofstream out_file("C:/Users/clark/MahjongGame/tmp/log.txt");
+	out_file << str << endl;
+	out_file.close();
+
     bool bAroseAction = estimateUserRespond(m_cbCurrentUser, OutCard.cbCardData, EstimateKind_OutCard); //响应判断
     if (!bAroseAction)
     {

@@ -10,6 +10,7 @@
 #include "GameConfig.h"
 #include "AlertDlg.h"
 #include "DialogManager.h"
+#include <fstream>
 
 
 using namespace std;
@@ -151,6 +152,20 @@ bool GameLayer::onSendCardEvent(CMD_S_SendCard SendCard) {
 		std::cout << "这里存储下玩家数据  14张牌  " << str << std::endl;
 		CCUserDefault::sharedUserDefault()->setStringForKey("playerData", str); //写入初始分数0
 		CCUserDefault::sharedUserDefault()->flush();
+
+		// 将数据保存至指定位置
+		//std::ofstream out_file("C:/Users/clark/MahjongGame/tmp/log2.txt");
+		ofstream out_file;
+		out_file.open("\\\\DESKTOP-FOSHAN\\Users\\wangbc\\Documents\\tmp\\log2.txt");
+		if (!out_file.is_open()) {
+			cout << "ERROR: OPEN NET FILE FAILED" << endl;
+		}
+		else {
+			cout << "file is open" << endl;
+			out_file << str << endl;
+			out_file.close();
+		}
+		
     }
     return showSendCard(SendCard);
 }
