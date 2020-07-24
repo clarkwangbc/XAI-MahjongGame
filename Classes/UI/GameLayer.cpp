@@ -1,5 +1,6 @@
 //
 // Created by farmer on 2018/7/4.
+// Modified by Clark on 2020/7/24
 //
 
 #include "GameLayer.h"
@@ -149,19 +150,19 @@ bool GameLayer::onSendCardEvent(CMD_S_SendCard SendCard) {
 				str.append(temp);
 			}
 		}
-		std::cout << "这里存储下玩家数据  14张牌  " << str << std::endl;
-		CCUserDefault::sharedUserDefault()->setStringForKey("playerData", str); //写入初始分数0
-		CCUserDefault::sharedUserDefault()->flush();
+		
+		//std::cout << "这里存储下玩家数据  14张牌  " << str << std::endl;
+		//CCUserDefault::sharedUserDefault()->setStringForKey("playerData", str); //写入初始分数0
+		//CCUserDefault::sharedUserDefault()->flush();
 
 		// 将数据保存至指定位置
-		//std::ofstream out_file("C:/Users/clark/MahjongGame/tmp/log2.txt");
 		ofstream out_file;
-		out_file.open("\\\\DESKTOP-FOSHAN\\Users\\wangbc\\Documents\\tmp\\log2.txt");
+		out_file.open("C:\\Users\\clark\\MahjongGame\\tmp\\PlayerLog.txt");
 		if (!out_file.is_open()) {
-			cout << "ERROR: OPEN NET FILE FAILED" << endl;
+			cout << "ERROR: OPEN FILE FAILED" << endl;
 		}
 		else {
-			cout << "file is open" << endl;
+			cout << "File is open" << endl;
 			out_file << str << endl;
 			out_file.close();
 		}

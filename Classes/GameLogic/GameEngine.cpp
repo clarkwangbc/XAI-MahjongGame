@@ -247,7 +247,7 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 	cocos2d::log("检测机器人的牌");
 
 	std::string str = "";
-	for (int a = 0; a < 4; a = a + 1)
+	for (int a = 1; a < 4; a = a + 1)
 	{
 		for (int i = 0; i < 34; i++)
 		{
@@ -268,14 +268,22 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 		}
 	}
 
-	std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
-	CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
-	CCUserDefault::sharedUserDefault()->flush();
+	//std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
+	//CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
+	//CCUserDefault::sharedUserDefault()->flush();
 
 	// 将数据保存至指定位置
-	std::ofstream out_file("C:/Users/clark/MahjongGame/tmp/log.txt");
-	out_file << str << endl;
-	out_file.close();
+	ofstream out_file;
+	out_file.open("C:\\Users\\clark\\MahjongGame\\tmp\\AILog.txt");
+	if (!out_file.is_open()) {
+		cout << "ERROR: OPEN FILE FAILED" << endl;
+	}
+	else {
+		cout << "File is open" << endl;
+		out_file << str << endl;
+		out_file.close();
+	}
+
 
     bool bAroseAction = estimateUserRespond(m_cbCurrentUser, OutCard.cbCardData, EstimateKind_OutCard); //响应判断
     if (!bAroseAction)
