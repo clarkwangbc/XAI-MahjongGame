@@ -194,6 +194,8 @@ bool GameEngine::onGameStart()
     return true;
 }
 
+
+
 /**
  * 玩家出牌
  * @param outCard
@@ -239,7 +241,7 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
     {
         if (i == 0)
         {
-            cocos2d::log("玩家时间！@@@@@@@@@@*********************！");
+            cocos2d::log("玩家出牌时间");
         }
 
         m_pIPlayer[i]->getGameEngineEventListener()->onOutCardEvent(SOutCard); //出牌时间
@@ -274,9 +276,9 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 
 	// 将数据保存至指定位置
 	ofstream out_file;
-	out_file.open("C:\\Users\\clark\\MahjongGame\\tmp\\AILog.txt");
+	out_file.open("C:/Users/clark/MahjongGame/ResultLogs\\AILog.txt");
 	if (!out_file.is_open()) {
-		cout << "ERROR: OPEN FILE FAILED" << endl;
+		cout << "!ERROR: OPEN FILE FAILED" << endl;
 	}
 	else {
 		cout << "File is open" << endl;

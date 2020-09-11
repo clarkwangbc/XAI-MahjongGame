@@ -12,6 +12,7 @@
 #include "AlertDlg.h"
 #include "DialogManager.h"
 #include <fstream>
+#include <Python.h>
 
 
 using namespace std;
@@ -37,6 +38,9 @@ GameLayer::GameLayer()  : IDialog() {
     m_iOutCardTimeOut = USER_OP_MAX_TIME;
     m_MeChairID = 0;
     initGame();
+	Py_Initialize();
+	PyRun_SimpleString("import mahjong_recommender");
+	cout << "python loaded" << endl;
 }
 
 GameLayer::~GameLayer() {
@@ -157,16 +161,18 @@ bool GameLayer::onSendCardEvent(CMD_S_SendCard SendCard) {
 
 		// 将数据保存至指定位置
 		ofstream out_file;
-		out_file.open("C:\\Users\\clark\\MahjongGame\\tmp\\PlayerLog.txt");
+		out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
 		if (!out_file.is_open()) {
-			cout << "ERROR: OPEN FILE FAILED" << endl;
+			cout << "!ERROR: OPEN FILE FAILED" << endl;
 		}
 		else {
 			cout << "File is open" << endl;
 			out_file << str << endl;
 			out_file.close();
 		}
-		
+		// 运行python脚本，将结果保存到本地
+		cout << "call python script" << endl;
+		PyRun_SimpleString("mahjong_recommender.final_out()");
     }
     return showSendCard(SendCard);
 }

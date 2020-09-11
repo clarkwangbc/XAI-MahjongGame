@@ -1,13 +1,15 @@
 //
 // Created by farmer on 2018/7/5.
-//
+// Modified by Clark on 2020/9/11
 
 #include "AIEngine.h"
 #include "IPlayer.h"
 #include "DelayCall.h"
 #include <iostream>
 #include <windows.h>
+
 using namespace std;
+
 AIEngine::AIEngine()
 {
     m_GameEngine = GameEngine::GetGameEngine();
@@ -235,7 +237,7 @@ bool AIEngine::onGameEndEvent(CMD_S_GameEnd &GameEnd)
  */
 void AIEngine::sendCard()
 {
-	cocos2d::log("机器人出牌 延迟1秒！！！！！！！！！！！！！！！！！！！ :%x");
+	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
 	AIEngine::updateOnce(1);
 	cocos2d::log("机器人出牌:%x", m_cbSendCardData);
 	CMD_C_OutCard OutCard;
@@ -243,7 +245,7 @@ void AIEngine::sendCard()
 	OutCard.cbCardData = m_cbSendCardData;
 	m_GameEngine->onUserOutCard(OutCard);
 	log("Once");
-	cocos2d::log("机器人出牌 延迟1秒！！！！！！！！~~~~~~~~~~~~~~~~~~~~ :%x");
+	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
 	//this->scheduleOnce(schedule_selector(AIEngine::updateOnce), 2.0f);
 	
 }
