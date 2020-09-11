@@ -186,7 +186,7 @@ bool GameEngine::onGameStart()
         }
     }
 
-	std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
+	// std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
     CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
     CCUserDefault::sharedUserDefault()->flush();                            //设置完一定要调用flush，才能从缓冲写入io
 
