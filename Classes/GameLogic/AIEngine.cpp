@@ -1,6 +1,7 @@
 //
 // Created by farmer on 2018/7/5.
 // Modified by Clark on 2020/9/11
+//
 
 #include "AIEngine.h"
 #include "IPlayer.h"
@@ -54,7 +55,7 @@ bool AIEngine::onUserEnterEvent(IPlayer *pIPlayer)
 
 bool AIEngine::onGameStartEvent(CMD_S_GameStart GameStart)
 {
-    cocos2d::log("机器人接收到游戏开始事件");
+    //cocos2d::log("机器人接收到游戏开始事件");
     initGame();
     m_cbLeftCardCount = GameStart.cbLeftCardCount;
     m_cbBankerChair = GameStart.cbBankerUser;
@@ -70,7 +71,7 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
         m_cbLeftCardCount--;
         if (SendCard.cbCurrentUser == m_MeChairID)
         {
-            cocos2d::log("机器人接收到发牌事件");
+            //cocos2d::log("机器人接收到发牌事件");
             m_cbCardIndex[m_MeChairID][GameLogic::switchToCardIndex(SendCard.cbCardData)]++;
         }
         m_cbSendCardData = SendCard.cbCardData;
@@ -99,10 +100,10 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
  */
 bool AIEngine::onOutCardEvent(CMD_S_OutCard OutCard)
 {
-    cocos2d::log("出牌人 %d，坐席 %d", OutCard.cbOutCardUser, m_MeChairID);
+    log("出牌人 %d，坐席 %d", OutCard.cbOutCardUser, m_MeChairID);
     if (OutCard.cbOutCardUser == m_MeChairID)
     {
-        cocos2d::log("机器人接收到出牌事件111");
+        log("玩家接收到出牌事件");
         m_cbCardIndex[m_MeChairID][GameLogic::switchToCardIndex(OutCard.cbOutCardData)]--;
     }
     m_cbDiscardCard[OutCard.cbOutCardUser][m_cbDiscardCount[OutCard.cbOutCardUser]++] = OutCard.cbOutCardData;
@@ -117,7 +118,7 @@ bool AIEngine::onOutCardEvent(CMD_S_OutCard OutCard)
  */
 bool AIEngine::onOperateNotifyEvent(CMD_S_OperateNotify OperateNotify)
 {
-    cocos2d::log("机器人接收到操作通知事件");
+    // cocos2d::log("机器人接收到操作通知事件");
     if (OperateNotify.cbActionMask == WIK_NULL)
     {
         return true; //无动作
@@ -150,7 +151,7 @@ bool AIEngine::onOperateNotifyEvent(CMD_S_OperateNotify OperateNotify)
  */
 bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult)
 {
-    cocos2d::log("机器人接收到操作结果事件");
+    // cocos2d::log("机器人接收到操作结果事件");
     tagWeaveItem weaveItem;
     memset(&weaveItem, 0, sizeof(tagWeaveItem));
     switch (OperateResult.cbOperateCode)
@@ -227,7 +228,7 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult)
  */
 bool AIEngine::onGameEndEvent(CMD_S_GameEnd &GameEnd)
 {
-    cocos2d::log("机器人接收到游戏结束事件");
+    // cocos2d::log("机器人接收到游戏结束事件");
     return true;
 }
 
@@ -239,12 +240,12 @@ void AIEngine::sendCard()
 {
 	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
 	AIEngine::updateOnce(1);
-	cocos2d::log("机器人出牌:%x", m_cbSendCardData);
+	// cocos2d::log("机器人出牌:%x", m_cbSendCardData);
 	CMD_C_OutCard OutCard;
 	memset(&OutCard, 0, sizeof(CMD_C_OutCard));
 	OutCard.cbCardData = m_cbSendCardData;
 	m_GameEngine->onUserOutCard(OutCard);
-	log("Once");
+	// log("Once");
 	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
 	//this->scheduleOnce(schedule_selector(AIEngine::updateOnce), 2.0f);
 	

@@ -1,5 +1,6 @@
 //
 // Created by farmer on 2018/7/5.
+// Modified by Clark on 2020/9/11
 //
  
 #include "Common.h"
@@ -10,6 +11,7 @@
 #include <cstring>
 #include <string>
 #include <fstream>
+#include <Python.h>
 
 using namespace std;
 
@@ -69,6 +71,10 @@ void GameEngine::init()
         memset(&m_cbDiscardCard[i], 0, sizeof(m_cbDiscardCard[i]));
         memset(&m_WeaveItemArray[i], 0, sizeof(m_WeaveItemArray[i]));
     }
+
+	Py_Initialize();
+	PyRun_SimpleString("import mahjong_recommender");
+	cout << "python loaded" << endl;
 }
 
 /**
@@ -164,32 +170,6 @@ bool GameEngine::onGameStart()
         }
     }
 
-	std::string str = "";
-    for (int a = 0; a < 4; a = a + 1)
-    {
-        for (int i = 0; i < 34; i++)
-        {
-         if (unsigned(m_cbCardIndex[a][i]!=0))
-         {
-			 auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[a][i]));
-			 if (i != 33) {
-				 temp += ",";
-			 }
-			 // strcat(str, temp);
-			 str.append(temp);
-         }
-        if (i == 33)
-        { //当前最后一个
-				str.append("$");
-        }
-         //  std::cout << " line:  " << a << "  list: " << i << "   Value IS:   " << unsigned(m_cbCardIndex[a][i]) << std::endl;
-        }
-    }
-
-	// std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
-    CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
-    CCUserDefault::sharedUserDefault()->flush();                            //设置完一定要调用flush，才能从缓冲写入io
-
     dispatchCardData(m_cbCurrentUser);
     return true;
 }
@@ -246,8 +226,8 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 
         m_pIPlayer[i]->getGameEngineEventListener()->onOutCardEvent(SOutCard); //出牌时间
     }
-	cocos2d::log("检测机器人的牌");
-
+	
+	log("记录机器人的牌");
 	std::string str = "";
 	for (int a = 1; a < 4; a = a + 1)
 	{
@@ -270,13 +250,9 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 		}
 	}
 
-	//std::cout << "存储四个数据 0为玩家但是只有13张所以 这里只用后面的三个敌人的数据  " << str << std::endl;
-	//CCUserDefault::sharedUserDefault()->setStringForKey("myWantData", str); //写入初始分数0
-	//CCUserDefault::sharedUserDefault()->flush();
-
 	// 将数据保存至指定位置
 	ofstream out_file;
-	out_file.open("C:/Users/clark/MahjongGame/ResultLogs\\AILog.txt");
+	out_file.open("C:/Users/clark/MahjongGame/ResultLogs/AILog.txt");
 	if (!out_file.is_open()) {
 		cout << "!ERROR: OPEN FILE FAILED" << endl;
 	}
@@ -341,6 +317,38 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
     m_cbCardIndex[cbCurrentUser][GameLogic::switchToCardIndex(m_cbSendCardData)]++; //将牌发给当前玩家
     m_cbProvideUser = cbCurrentUser;                                                //设置供应用户为当前玩家
     m_cbProvideCard = m_cbSendCardData;                                             //设置供应扑克为当前发的牌
+
+	if (cbCurrentUser == 0)
+	{
+		// 这里开始记录玩家的手牌数据
+		std::string str = "";
+		int num = 0;
+		for (int i = 0; i < 34; i++)
+		{
+			if (unsigned(m_cbCardIndex[0][i] != 0))
+			{
+				auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
+				num += unsigned(m_cbCardIndex[0][i]);
+				str.append(temp);
+			}
+		}
+
+		// 这里存储下玩家14张牌的数据，并将数据保存至指定位置
+		ofstream out_file;
+		out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
+		if (!out_file.is_open()) {
+			cout << "!ERROR: OPEN FILE FAILED" << endl;
+		}
+		else {
+			cout << "File is open" << endl;
+			out_file << str << endl;
+			out_file.close();
+		}
+		// 运行python脚本，将结果保存到本地
+		cout << "Call python script" << endl;
+		PyRun_SimpleString("mahjong_recommender.final_out()");
+	}
+
     if (m_cbLeftCardCount > 0)                                                      //暗杠判定，剩下的牌>1才能杠
     {
         tagGangCardResult GangCardResult;
@@ -397,9 +405,44 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
             if (!m_cbPassPeng[i][GameLogic::switchToCardIndex(cbCurrentCard)]) //检测可以碰牌、没碰上家的牌不能碰对家和下家的
             {
                 m_cbUserAction[i] |= GameLogic::estimatePengCard(m_cbCardIndex[i], cbCurrentCard); //碰牌判断
+				// 检测碰时可以在这里
+				if ((m_cbUserAction[i] != 0)&&(i == 0))
+				{
+					// 这里开始记录玩家的手牌数据
+					std::string str = "";
+					int num = 0;
+					for (int i = 0; i < 34; i++)
+					{
+						if (unsigned(m_cbCardIndex[0][i] != 0))
+						{
+							auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
+							num += unsigned(m_cbCardIndex[0][i]);
+							str.append(temp);
+						}
+					}
+
+					std::string temp2 = to_string(GameLogic::switchToCardIndex(cbCurrentCard)) + ":1,";
+					str.append(temp2);
+
+					// 这里存储下玩家14张牌的数据，并将数据保存至指定位置
+					ofstream out_file;
+					out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Peng.txt");
+					if (!out_file.is_open()) {
+						cout << "!ERROR: OPEN FILE FAILED" << endl;
+					}
+					else {
+						cout << "File is open" << endl;
+						out_file << str << endl;
+						out_file.close();
+					}
+
+					// 添加是否碰牌的判断！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+					
+				}
                 if ((m_cbUserAction[i] && WIK_P) != 0)
                 {
                     m_cbPassPeng[i][GameLogic::switchToCardIndex(cbCurrentCard)] = true;
+					
                 }
             }
             if (m_cbLeftCardCount > 0) //有剩余的牌才能杠

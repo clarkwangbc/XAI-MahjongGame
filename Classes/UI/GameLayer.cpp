@@ -12,7 +12,6 @@
 #include "AlertDlg.h"
 #include "DialogManager.h"
 #include <fstream>
-#include <Python.h>
 
 
 using namespace std;
@@ -38,9 +37,9 @@ GameLayer::GameLayer()  : IDialog() {
     m_iOutCardTimeOut = USER_OP_MAX_TIME;
     m_MeChairID = 0;
     initGame();
-	Py_Initialize();
-	PyRun_SimpleString("import mahjong_recommender");
-	cout << "python loaded" << endl;
+	// Py_Initialize();
+	// PyRun_SimpleString("import mahjong_recommender");
+	// cout << "python loaded" << endl;
 }
 
 GameLayer::~GameLayer() {
@@ -138,41 +137,8 @@ bool GameLayer::onSendCardEvent(CMD_S_SendCard SendCard) {
     m_cbLeftCardCount--;
     if (SendCard.cbCurrentUser == m_MeChairID) {
         m_cbCardIndex[m_MeChairID][GameLogic::switchToCardIndex(SendCard.cbCardData)]++;
-		std::cout << " -------------------------------------------------------------------" << std::endl;
-		std::string str = "";
-		int num = 0;
-		for (int i = 0; i < 34; i++)
-		{
-			if (unsigned(m_cbCardIndex[0][i] != 0))
-			{
-				auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i]));
-				num+= unsigned(m_cbCardIndex[0][i]);
-				if (num<14) {
-					temp += ",";
-					std::cout << "num 的值:  " << num <<"to_string(i):" << to_string(i) << std::endl;
-				}
-				str.append(temp);
-			}
-		}
-		
-		//std::cout << "这里存储下玩家数据  14张牌  " << str << std::endl;
-		//CCUserDefault::sharedUserDefault()->setStringForKey("playerData", str); //写入初始分数0
-		//CCUserDefault::sharedUserDefault()->flush();
 
-		// 将数据保存至指定位置
-		ofstream out_file;
-		out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
-		if (!out_file.is_open()) {
-			cout << "!ERROR: OPEN FILE FAILED" << endl;
-		}
-		else {
-			cout << "File is open" << endl;
-			out_file << str << endl;
-			out_file.close();
-		}
-		// 运行python脚本，将结果保存到本地
-		cout << "call python script" << endl;
-		PyRun_SimpleString("mahjong_recommender.final_out()");
+		//保存遗址
     }
     return showSendCard(SendCard);
 }
@@ -434,7 +400,9 @@ bool GameLayer::onOperateResultEvent(CMD_S_OperateResult OperateResult) {
                 memset(&SendCard, 0, sizeof(CMD_S_SendCard));
                 SendCard.cbCurrentUser = OperateResult.cbOperateUser;
                 SendCard.cbCardData = bTempCardData[MAX_COUNT - (cbWeaveItemCount * 3) - 1];
+
                 showSendCard(SendCard);    //模拟发送一张牌
+
             }
             //移除桌上的哪张牌
             m_cbDiscardCount[OperateResult.cbProvideUser]--;  //移除桌上的牌
