@@ -14,7 +14,7 @@
 /**
 * 播放声音
 * @param file
-
+*/
 void UIHelper::playSound(std::string file) {
     float volume = GameConfig::getInstance()->m_EffectsVolume;
     if (volume > 0) {
@@ -22,8 +22,8 @@ void UIHelper::playSound(std::string file) {
         CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(file.c_str(), false);
     }
 }
-*/
 
+/*
 void UIHelper::playSound(std::string file) {
 	float volume = GameConfig::getInstance()->m_EffectsVolume;
 	std::string tmp = utility::toString("C:/Users/clark/MahjongGame/cocostudio-mahjong/proj.win32/Debug.win32/", file); //加入绝对路径
@@ -32,7 +32,7 @@ void UIHelper::playSound(std::string file) {
 		CocosDenshion::SimpleAudioEngine::getInstance()->playEffect(tmp.c_str(), false);
 	}
 }
-
+/*
 
 /**
  * 根据Tag获取节点

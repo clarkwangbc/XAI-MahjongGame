@@ -74,7 +74,7 @@ void GameEngine::init()
 
 	Py_Initialize();
 	PyRun_SimpleString("import mahjong_recommender");
-	cout << "python loaded" << endl;
+	log("初始化Python环境");
 }
 
 /**
@@ -153,7 +153,7 @@ bool GameEngine::onGameStart()
         GameLogic::switchToCardData(m_cbCardIndex[i], GameStart.cbCardData, MAX_COUNT);
         //if (m_pIPlayer[i]->isAndroid())
         if (true)
-        { // 机器人作弊用，用于分析其他玩的牌
+        { // 机器人作弊用，用于分析其他玩家的牌
             uint8_t bIndex = 1;
             for (uint8_t j = 0; j < GAME_PLAYER; j++)
             {
@@ -221,13 +221,13 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
     {
         if (i == 0)
         {
-            cocos2d::log("玩家出牌时间");
+            log("电脑玩家出牌时间");
         }
 
         m_pIPlayer[i]->getGameEngineEventListener()->onOutCardEvent(SOutCard); //出牌时间
     }
 	
-	log("记录机器人的牌");
+	log("记录电脑玩家的手牌");
 	std::string str = "";
 	for (int a = 1; a < 4; a = a + 1)
 	{
@@ -254,13 +254,13 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 	ofstream out_file;
 	out_file.open("C:/Users/clark/MahjongGame/ResultLogs/AILog.txt");
 	if (!out_file.is_open()) {
-		cout << "!ERROR: OPEN FILE FAILED" << endl;
+		log("ERROR: OPEN FILE FAILED");
 	}
 	else {
-		cout << "File is open" << endl;
 		out_file << str << endl;
 		out_file.close();
 	}
+	log("电脑玩家手牌保存完毕");
 
 
     bool bAroseAction = estimateUserRespond(m_cbCurrentUser, OutCard.cbCardData, EstimateKind_OutCard); //响应判断
@@ -320,6 +320,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 
 	if (cbCurrentUser == 0)
 	{
+		log("记录玩家手牌");
 		// 这里开始记录玩家的手牌数据
 		std::string str = "";
 		int num = 0;
@@ -333,36 +334,67 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			}
 		}
 
-		// 这里存储下玩家14张牌的数据，并将数据保存至指定位置
+		// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 		ofstream out_file;
 		out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
 		if (!out_file.is_open()) {
-			cout << "!ERROR: OPEN FILE FAILED" << endl;
+			log("ERROR: OPEN FILE FAILED");
 		}
 		else {
-			cout << "File is open" << endl;
 			out_file << str << endl;
 			out_file.close();
 		}
 		// 运行python脚本，将结果保存到本地
-		cout << "Call python script" << endl;
-		PyRun_SimpleString("mahjong_recommender.final_out()");
+		log("运行Python脚本计算");
+		PyRun_SimpleString("mahjong_recommender.normal_discard()");
 	}
 
     if (m_cbLeftCardCount > 0)                                                      //暗杠判定，剩下的牌>1才能杠
     {
         tagGangCardResult GangCardResult;
         m_cbUserAction[cbCurrentUser] |= GameLogic::analyseGangCard(m_cbCardIndex[cbCurrentUser], m_WeaveItemArray[cbCurrentUser], m_cbWeaveItemCount[cbCurrentUser], GangCardResult);
-        if ((m_cbUserAction[cbCurrentUser] & WIK_G) != 0x0)
+
+		if ((cbCurrentUser == 0) & (m_cbUserAction[cbCurrentUser]!=0))
+		{
+			log("记录玩家手牌");
+			// 这里开始记录玩家的手牌数据
+			std::string str = "";
+			int num = 0;
+			for (int i = 0; i < 34; i++)
+			{
+				if (unsigned(m_cbCardIndex[0][i] != 0))
+				{
+					auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
+					num += unsigned(m_cbCardIndex[0][i]);
+					str.append(temp);
+				}
+			}
+
+			// 这里存储下玩家手牌的数据，并将数据保存至指定位置
+			ofstream out_file;
+			out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
+			if (!out_file.is_open()) {
+				log("ERROR: OPEN FILE FAILED");
+			}
+			else {
+				out_file << str << endl;
+				out_file.close();
+			}
+			// 运行python脚本，将结果保存到本地
+			log("运行Python脚本计算");
+			PyRun_SimpleString("mahjong_recommender.gang_judge()");
+		}
+        
+		if ((m_cbUserAction[cbCurrentUser] & WIK_G) != 0x0)
         { //判定是否杠牌
             //记录杠的数量
             m_cbGangCount = GangCardResult.cbCardCount;
-            memcpy(m_cbGangCard, GangCardResult.cbCardData, sizeof(m_cbGangCard)); //杠的数量
+            ::memcpy(m_cbGangCard, GangCardResult.cbCardData, sizeof(m_cbGangCard)); //杠的数量
         }
     }
     //胡牌判断
     uint8_t cbTempCardIndex[MAX_INDEX];
-    memcpy(cbTempCardIndex, m_cbCardIndex[m_cbCurrentUser], sizeof(cbTempCardIndex));
+    ::memcpy(cbTempCardIndex, m_cbCardIndex[m_cbCurrentUser], sizeof(cbTempCardIndex));
     GameLogic::removeCard(cbTempCardIndex, m_cbSendCardData); //移除发的那张牌进行分析
     //如果胡牌则是自摸
     m_cbUserAction[cbCurrentUser] |= GameLogic::analyseHuCard(cbTempCardIndex, m_WeaveItemArray[cbCurrentUser], m_cbWeaveItemCount[cbCurrentUser], m_cbSendCardData, m_cbHuKind[cbCurrentUser], m_llHuRight[cbCurrentUser], m_cbHuSpecial[cbCurrentUser], m_cbSendCardCount, m_cbOutCardCount, m_bGangStatus, true, m_bQiangGangStatus, m_cbFanShu[cbCurrentUser], false);
@@ -376,7 +408,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
     SendCard.cbActionMask = m_cbUserAction[cbCurrentUser];
     SendCard.cbCardData = m_cbSendCardData;
     SendCard.cbGangCount = m_cbGangCount;
-    memcpy(&SendCard.cbGangCard, m_cbGangCard, sizeof(m_cbGangCard));
+    ::memcpy(&SendCard.cbGangCard, m_cbGangCard, sizeof(m_cbGangCard));
     SendCard.bTail = bTail;
 
     for (uint8_t i = 0; i < GAME_PLAYER; i++)
@@ -409,6 +441,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 				if ((m_cbUserAction[i] != 0)&&(i == 0))
 				{
 					// 这里开始记录玩家的手牌数据
+					log("记录玩家手牌");
 					std::string str = "";
 					int num = 0;
 					for (int i = 0; i < 34; i++)
@@ -424,20 +457,20 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 					std::string temp2 = to_string(GameLogic::switchToCardIndex(cbCurrentCard)) + ":1,";
 					str.append(temp2);
 
-					// 这里存储下玩家14张牌的数据，并将数据保存至指定位置
+					// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 					ofstream out_file;
 					out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Peng.txt");
 					if (!out_file.is_open()) {
-						cout << "!ERROR: OPEN FILE FAILED" << endl;
+						log("ERROR: OPEN FILE FAILED");
 					}
 					else {
-						cout << "File is open" << endl;
 						out_file << str << endl;
 						out_file.close();
 					}
 
-					// 添加是否碰牌的判断！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
-					
+					// 判断是否需要碰牌！
+					log("运行Python脚本计算");
+					PyRun_SimpleString("mahjong_recommender.peng_judge_discard()");
 				}
                 if ((m_cbUserAction[i] && WIK_P) != 0)
                 {
@@ -445,6 +478,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 					
                 }
             }
+
             if (m_cbLeftCardCount > 0) //有剩余的牌才能杠
             {
                 m_cbUserAction[i] |= GameLogic::estimateGangCard(m_cbCardIndex[i], cbCurrentCard); //杠牌判断，明杠
@@ -452,10 +486,47 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
                 { //有杠
                     m_cbGangCount = 1;
                     m_cbGangCard[0] = cbCurrentCard;
+					// log("gang!!!!!!!!!!!!");
+					// 检测杠时可以在这里
+					if (i == 0)
+					{
+						// 这里开始记录玩家的手牌数据
+						log("记录玩家手牌");
+						std::string str = "";
+						int num = 0;
+						for (int i = 0; i < 34; i++)
+						{
+							if (unsigned(m_cbCardIndex[0][i] != 0))
+							{
+								auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
+								num += unsigned(m_cbCardIndex[0][i]);
+								str.append(temp);
+							}
+						}
+
+						std::string temp2 = to_string(GameLogic::switchToCardIndex(cbCurrentCard)) + ":1,";
+						str.append(temp2);
+
+						// 这里存储下玩家手牌的数据，并将数据保存至指定位置
+						ofstream out_file;
+						out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Gang.txt");
+						if (!out_file.is_open()) {
+							log("ERROR: OPEN FILE FAILED");
+						}
+						else {
+							out_file << str << endl;
+							out_file.close();
+						}
+
+						// 判断是否需要杠牌！
+						log("运行Python脚本计算");
+						PyRun_SimpleString("mahjong_recommender.gang_judge()");
+					}
                 }
             }
         }
-        uint8_t cbWeaveCount = m_cbWeaveItemCount[i]; //获取组合牌的总数，既碰或者杠
+        
+		uint8_t cbWeaveCount = m_cbWeaveItemCount[i]; //获取组合牌的总数，既碰或者杠
         //此处需要处理番数一样不能 ，开始没胡，没过手也不能胡
         m_cbUserAction[i] |= GameLogic::analyseHuCard(m_cbCardIndex[i], m_WeaveItemArray[i], cbWeaveCount, cbCurrentCard, m_cbHuKind[i], m_llHuRight[i], m_cbHuSpecial[i], m_cbSendCardCount, m_cbOutCardCount, m_bGangStatus, false, m_bQiangGangStatus, m_cbFanShu[i], false);
         if (m_cbUserAction[i] != WIK_NULL)
@@ -489,7 +560,7 @@ bool GameEngine::sendOperateNotify()
             OperateNotify.cbActionCard = m_cbProvideCard;                  //设置供应的牌
             OperateNotify.cbActionMask = m_cbUserAction[i];                //设置动作类型
             OperateNotify.cbGangCount = m_cbGangCount;                     //杠的数量
-            memcpy(OperateNotify.cbGangCard, m_cbGangCard, m_cbGangCount); //用于处理手上存在多个杠的情况
+            ::memcpy(OperateNotify.cbGangCard, m_cbGangCard, m_cbGangCount); //用于处理手上存在多个杠的情况
             m_pIPlayer[i]->getGameEngineEventListener()->onOperateNotifyEvent(OperateNotify);
         }
     }
@@ -640,7 +711,7 @@ bool GameEngine::onUserOperateCard(CMD_C_OperateCard OperateCard)
         {
             uint8_t cbRemoveCard[] = {cbTargetCard, cbTargetCard};                                  //设置两张牌
             GameLogic::removeCard(m_cbCardIndex[cbTargetUser], cbRemoveCard, sizeof(cbRemoveCard)); //手上删除这两张牌
-            break;
+			break;
         }
         case WIK_G: //杠牌操作
         {
@@ -683,7 +754,7 @@ bool GameEngine::onUserOperateCard(CMD_C_OperateCard OperateCard)
                 if ((m_cbUserAction[m_cbCurrentUser] & WIK_G) != 0x0)
                 {                                                                          //判定是否杠牌
                     m_cbGangCount = GangCardResult.cbCardCount;                            //杠的数量
-                    memcpy(m_cbGangCard, GangCardResult.cbCardData, sizeof(m_cbGangCard)); //杠的牌
+                    ::memcpy(m_cbGangCard, GangCardResult.cbCardData, sizeof(m_cbGangCard)); //杠的牌
                     sendOperateNotify();
                 }
             }
@@ -789,7 +860,7 @@ bool GameEngine::onUserOperateCard(CMD_C_OperateCard OperateCard)
             uint8_t cbWeaveItemCount = m_cbWeaveItemCount[m_cbCurrentUser];                   //获取组合总数
             tagWeaveItem *pWeaveItem = m_WeaveItemArray[m_cbCurrentUser];                     //获取全部组合
             uint8_t cbTempCardIndex[MAX_INDEX];                                               //临时牌变量用来分析
-            memcpy(cbTempCardIndex, m_cbCardIndex[m_cbCurrentUser], sizeof(cbTempCardIndex)); //设置值
+            ::memcpy(cbTempCardIndex, m_cbCardIndex[m_cbCurrentUser], sizeof(cbTempCardIndex)); //设置值
             GameLogic::removeCard(cbTempCardIndex, m_cbHuCard);                               //移除发的那张牌
             GameLogic::analyseHuCard(cbTempCardIndex, pWeaveItem, cbWeaveItemCount, m_cbHuCard, m_cbHuKind[cbChairID], m_llHuRight[cbChairID], m_cbHuSpecial[cbChairID], m_cbSendCardCount, m_cbOutCardCount, m_bGangStatus, true, m_bQiangGangStatus, m_cbFanShu[cbChairID], true);
             FvMask::Add(m_cbTargetUser, _MASK_(m_cbCurrentUser)); //添加权重
@@ -866,7 +937,7 @@ bool GameEngine::onEventGameConclude(uint8_t cbChairID)
         GameEnd.cbHuKind[i] = m_cbHuKind[i];
         GameEnd.cbHuSpecial[i] = m_cbHuSpecial[i];
         GameEnd.cbWeaveCount[i] = m_cbWeaveItemCount[i];
-        memcpy(GameEnd.WeaveItemArray[i], m_WeaveItemArray[i], sizeof(m_WeaveItemArray[i]));
+        ::memcpy(GameEnd.WeaveItemArray[i], m_WeaveItemArray[i], sizeof(m_WeaveItemArray[i]));
     }
     for (uint8_t i = 0; i < GAME_PLAYER; i++)
     { //计算杠分

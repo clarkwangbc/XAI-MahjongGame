@@ -13,7 +13,6 @@
 #include "DialogManager.h"
 #include <fstream>
 
-
 using namespace std;
 
 static uint8_t USER_OP_MAX_TIME = 99; // 出牌倒计时秒数

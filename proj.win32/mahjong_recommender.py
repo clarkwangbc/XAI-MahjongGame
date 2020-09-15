@@ -4,6 +4,18 @@ import pandas as pd
 import numpy as np
 import paramiko
 
+# 各种地址
+robot_url = "169.254.111.214"
+player_cards_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt"
+player_cards_peng_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Peng.txt"
+player_cards_gang_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Gang.txt"
+ai_card_path = "C:/Users/clark/MahjongGame/ResultLogs/AILog.txt"
+
+result_suggestion_path = "C:/Users/clark/MahjongGame/ResultLogs/Suggestion.txt"
+result_explanation_path = "C:/Users/clark/MahjongGame/ResultLogs/Explanation.txt"
+robot_sug_path = "/home/nao/clark-XAI/Results_Sug.txt"
+robot_exp_path = "/home/nao/clark-XAI/Results_Exp.txt"
+
 # 分别载入三张概率表，分别对应普通牌（万，筒，条），风牌（东、西、南、北），和键牌（中、发、白）
 tab_normal = pd.read_csv("mahjong_tables/mahjong_normal.csv")
 tab_feng = pd.read_csv("mahjong_tables/mahjong_feng.csv")
@@ -167,6 +179,7 @@ def avoid_pai(file_path):
 # 解释器
 #######
 
+# 考虑避免碰牌
 # 对比解释：通过比较出牌后胜率最大的两张牌，选择其中较优的一个。
 # 输出两个结果：
 #   chu_pai：最后应该出的牌
@@ -198,7 +211,7 @@ def contrast_explain(origin_pai, pai, prob, avoid):
         for pai_index in max_array[1:-1]:
             opt_pai_1 = opt_pai_1 + "、" + int_2_pai[pai[pai_index]]
         opt_pai_2 = int_2_pai[pai[max_array[len(result_log) - 1]]]
-        suggestions = "我认为应该出" + discard_pai + "。"
+        suggestions = "我认为出" + discard_pai + "。"
         explanation = "其实出" + discard_pai + opt_pai_1 + "都不错，但是都容易被人碰走，而" + discard_pai + \
                       "是获胜概率最高的一张。此外还可以考虑出" + opt_pai_2 + "这张牌。出" + opt_pai_2 + \
                       "虽然不容易被碰走，但是会让牌型变得比较差，因此还是不推荐。" + "所以还是出" + discard_pai + "最好。"
@@ -206,8 +219,8 @@ def contrast_explain(origin_pai, pai, prob, avoid):
     else:
         discard_pai = int_2_pai[pai[max_array[len(result_log) - 1]]]
         opt_pai = int_2_pai[pai[max_array[0]]]
-        suggestions = "我觉得出" + discard_pai + "。"
-        explanation = "从概率的角度来说，" + opt_pai + \
+        suggestions = "出" + discard_pai + "。"
+        explanation = "根据计算，" + opt_pai + \
                       "的获胜概率更高，但是也容易被人碰走。为了兼顾牌型和防守，我认为出" + discard_pai + "更好。"
 
     return discard_pai, suggestions, explanation
@@ -293,32 +306,101 @@ def combo_analysis(pai):
     return explain_text
 
 
-# 最终的输出函数
-def final_out():
-    # 各种地址
-    robot_url = "169.254.71.247"
-    player_cards_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt"
-    ai_card_path = "C:/Users/clark/MahjongGame/ResultLogs/AILog.txt"
-    result_path = "C:/Users/clark/MahjongGame/ResultLogs/Results.txt"
-    robot_path = "/home/nao/clark-XAI/Results.txt"
-
-    # 计算
-    chu_pai_prob, player_simple_pai, player_origin_pai = chu_pai(player_cards_path)
-    avoid_peng = avoid_pai(ai_card_path)
-    chu, suggest, explain = contrast_explain(player_origin_pai, player_simple_pai, chu_pai_prob, avoid_peng)
-
-    # 输出结果保存到本地路径
-    fo = open(result_path, "w")
-    fo.write(suggest)
-    fo.write(explain)
-    fo.close()
-
-    # 将结果上传至机器人
+# 上传文件至机器人
+def save_upload(suggestion, explanation):
+    # 保存出牌建议
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+    # 保存出牌解释
+    fo_e = open(result_explanation_path, "w")
+    fo_e.write(explanation)
+    fo_e.close()
+    # 上传至机器人
     transport = paramiko.Transport(robot_url, 22)
     transport.connect(username="nao", password="hciuser524")
     sftp = paramiko.SFTPClient.from_transport(transport)
-    sftp.put(result_path, robot_path)
+    sftp.put(result_suggestion_path, robot_sug_path)
+    sftp.put(result_explanation_path, robot_exp_path)
     sftp.close()
     transport.close()
+    return
 
+
+# 测试用的
+def test_print(suggestion, explanation):
+    # 保存出牌建议
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+    # 保存出牌解释
+    fo_e = open(result_explanation_path, "w")
+    fo_e.write(explanation)
+    fo_e.close()
+    # 打印结果
+    print(suggestion)
+    print(explanation)
+    return
+
+
+##########
+# 出牌方法 #
+##########
+# 最终的一般的出牌函数
+def normal_discard():
+    # 计算
+    chu_pai_prob, player_simple_pai, player_origin_pai = chu_pai(player_cards_path)
+    avoid_peng = avoid_pai(ai_card_path)
+    chu, suggestion, explanation = contrast_explain(player_origin_pai, player_simple_pai, chu_pai_prob, avoid_peng)
+
+    # test_print(suggestion, explanation)
+
+    # 将结果上传至机器人
+    save_upload(suggestion, explanation)
+    return
+
+
+# 判断是否碰牌
+def peng_judge_discard():
+    chu_pai_prob, player_simple_pai, player_origin_pai = chu_pai(player_cards_peng_path)
+    prob_np = np.array(chu_pai_prob)
+    max_array = prob_np.argsort()[-4:][::-1]
+    discard_pai = player_simple_pai[max_array[0]]
+    if discard_pai == player_origin_pai[-1]:
+        suggestion = "建议不要碰！"
+        explanation = "碰了后牌型太差了。"
+    else:
+        suggestion = "可以碰！"
+        explanation = "碰了后出" + int_2_pai[discard_pai]
+
+    # test_print(suggestion, explanation)
+
+    # 将结果上传至机器人
+    save_upload(suggestion, explanation)
+    return
+
+
+# 判断是否杠牌
+def gang_judge():
+    player_origin_pai = read_player_card(player_cards_gang_path)
+    gang_card = player_origin_pai[-1]
+    if player_origin_pai[-1] not in player_origin_pai[0:-1]:
+        suggestion = "这里一定要杠。"
+        explanation = "杠了后增加牌的番数"
+    else:
+        origin_score = calc(player_origin_pai[0:-1])
+        while gang_card in player_origin_pai:
+            player_origin_pai.remove(gang_card)
+        gang_score = calc(player_origin_pai)
+        if origin_score > gang_score:
+            suggestion = "这里最好不要杠。"
+            explanation = "因为杠了后会破坏牌型。"
+        else:
+            suggestion = "这里一定要杠。"
+            explanation = "杠了后既增加牌的番数，又不怎么破坏现有的牌型。"
+
+    # test_print(suggestion, explanation)
+
+    # 将结果上传至机器人
+    save_upload(suggestion, explanation)
     return
