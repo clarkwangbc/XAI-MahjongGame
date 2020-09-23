@@ -8,6 +8,9 @@
           <Image Name="cancel.png" />
           <Image Name="ok.png" />
         </Folder>
+        <Folder Name="ConfidenceLayer">
+          <Image Name="textField.png" />
+        </Folder>
         <Folder Name="GameLayer">
           <Folder Name="Effect">
             <Image Name="Chi.png" />
@@ -250,10 +253,12 @@
           <Image Name="im_close.png" />
         </Folder>
         <Project Name="AlertLayer.csd" Type="Layer" />
+        <TTF Name="arial.ttf" />
         <Project Name="BtnGang.csd" Type="Node" />
         <Project Name="BtnGuo.csd" Type="Node" />
         <Project Name="BtnHu.csd" Type="Node" />
         <Project Name="BtnPeng.csd" Type="Node" />
+        <Project Name="ConfidenceLayer.csd" Type="Layer" />
         <TTF Name="DFYuanW7-GB2312.ttf" />
         <Project Name="EffectGang.csd" Type="Node" />
         <Project Name="EffectHu.csd" Type="Node" />
@@ -264,6 +269,7 @@
         <Project Name="Gang0.csd" Type="Node" />
         <Project Name="Gang1.csd" Type="Node" />
         <Project Name="HelloLayer.csd" Type="Layer" />
+        <TTF Name="Marker Felt.ttf" />
         <TTF Name="num.ttf" />
         <Project Name="Peng0.csd" Type="Node" />
         <Project Name="Peng1.csd" Type="Node" />

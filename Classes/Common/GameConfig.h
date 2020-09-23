@@ -13,6 +13,7 @@ class GameConfig {
 
 public: //音量
     float m_EffectsVolume;
+	std::string m_ParticipantId;
 
 private:
     GameConfig();

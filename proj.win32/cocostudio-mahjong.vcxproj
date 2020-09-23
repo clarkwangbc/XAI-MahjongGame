@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -288,6 +288,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClCompile Include="..\Classes\Scene\LoadingScene.cpp" />
     <ClCompile Include="..\Classes\Scene\PlayScene.cpp" />
     <ClCompile Include="..\Classes\UI\AlertDlg.cpp" />
+    <ClCompile Include="..\Classes\UI\ConfidenceDlg.cpp" />
     <ClCompile Include="..\Classes\UI\GameLayer.cpp" />
     <ClCompile Include="..\Classes\UI\GameOverDlg.cpp" />
     <ClCompile Include="..\Classes\UI\SettingDlg.cpp" />
@@ -314,6 +315,7 @@ xcopy "$(ProjectDir)..\Resources" "$(OutDir)" /D /E /I /F /Y
     <ClInclude Include="..\Classes\Scene\LoadingScene.h" />
     <ClInclude Include="..\Classes\Scene\PlayScene.h" />
     <ClInclude Include="..\Classes\UI\AlertDlg.h" />
+    <ClInclude Include="..\Classes\UI\ConfidenceDlg.h" />
     <ClInclude Include="..\Classes\UI\GameLayer.h" />
     <ClInclude Include="..\Classes\UI\GameOverDlg.h" />
     <ClInclude Include="..\Classes\UI\IDialog.h" />

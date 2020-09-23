@@ -1,5 +1,5 @@
 <GameFile>
-  <PropertyGroup Name="SetLayer" Type="Layer" ID="8bb38705-4c58-4bcc-9733-a5c31c323230" Version="3.10.0.0" />
+  <PropertyGroup Name="SetLayer_0" Type="Layer" ID="01bd9bc6-fa8b-410f-8cc5-2a59a1c4de16" Version="3.10.0.0" />
   <Content ctype="GameProjectContent">
     <Content>
       <Animation Duration="0" Speed="1.0000" />

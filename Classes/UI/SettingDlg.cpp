@@ -1,5 +1,5 @@
 //
-// Created by farmer on 2018/7/8.
+// Created by Clark on 2020/9/15.
 //
 
 #include "SettingDlg.h"

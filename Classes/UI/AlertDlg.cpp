@@ -68,7 +68,7 @@ void AlertDlg::setAlertType(AlertDlg::AlertTypeEnum typeEnum, bool autoClose) {
 void AlertDlg::setText(std::string content, std::string title) {
     m_title->setString(title);
     m_scrollView->removeAllChildren();
-    ui::Text *pContent = ui::Text::create(content, "Arial", 30);    //设置字体
+    ui::Text *pContent = ui::Text::create(content, "arial", 30);    //设置字体
     pContent->setTextColor(Color4B(Color3B(135, 73, 48)));
     pContent->setPosition(Point::ZERO);
     pContent->setAnchorPoint(Vec2(0, 1));

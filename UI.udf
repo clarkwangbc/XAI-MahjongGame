@@ -11,7 +11,7 @@
         <iOS_Target Value="UI-mobile" />
         <iOS_BundleID Value="iPhone Distribution: Youfang Xi (K267RDL76J)" />
         <Platform Value="None" />
-        <RunPlatform Value="None" />
+        <RunPlatform Value="Windows" />
         <FrameworkVersion Value="cocos2d-x-3.10" />
         <IsDebugKeystore Value="True" />
         <KeystorePassword Value="" />
@@ -31,10 +31,11 @@
     <Item Key="TabsParamsKey">
       <Value ctype="TabsInfo">
         <OpenedDocuments>
-          <FilePathData Path="Peng0.csd" />
+          <FilePathData Path="ConfidenceLayer.csd" />
           <FilePathData Path="SetLayer.csd" />
+          <FilePathData Path="HelloLayer.csd" />
         </OpenedDocuments>
-        <ActiveDocument Path="SetLayer.csd" />
+        <ActiveDocument Path="HelloLayer.csd" />
       </Value>
     </Item>
   </Properties>

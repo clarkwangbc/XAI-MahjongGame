@@ -8,6 +8,7 @@
 #include "RealPlayer.h"
 #include "AIEngine.h"
 #include "SettingDlg.h"
+#include "ConfidenceDlg.h"
 #include "GameConfig.h"
 #include "AlertDlg.h"
 #include "DialogManager.h"
@@ -36,9 +37,6 @@ GameLayer::GameLayer()  : IDialog() {
     m_iOutCardTimeOut = USER_OP_MAX_TIME;
     m_MeChairID = 0;
     initGame();
-	// Py_Initialize();
-	// PyRun_SimpleString("import mahjong_recommender");
-	// cout << "python loaded" << endl;
 }
 
 GameLayer::~GameLayer() {
@@ -169,6 +167,14 @@ bool GameLayer::onOutCardEvent(CMD_S_OutCard OutCard) {
     }
     switch (cbViewID) {
         case 0: {
+			DialogManager::shared()->showDialog(ConfidenceDlg::create());
+			//用户出牌记录
+			ofstream fCardLog;
+			std::string filename = GameConfig::getInstance()->m_ParticipantId + "_cardlog.txt";
+			std::string log_path = "C:/Users/clark/MahjongGame/UserLogs/" + filename;
+			fCardLog.open(log_path, ios::app);
+			fCardLog << ((OutCard.cbOutCardData & MASK_COLOR) >> 4) * 9 + (OutCard.cbOutCardData & MASK_VALUE) << endl;
+			fCardLog.close();
             showAndUpdateHandCard();                     //更新手上的牌
             ui::Layout *pRecvCardList = dynamic_cast<ui::Layout *>(UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], utility::toString("RecvHandCard_0")));
             pRecvCardList->removeAllChildren(); //移除出牌位置的牌

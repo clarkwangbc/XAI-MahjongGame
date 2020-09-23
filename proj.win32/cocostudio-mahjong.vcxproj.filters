@@ -87,6 +87,9 @@
     <ClCompile Include="..\Classes\Common\DelayCall.cpp">
       <Filter>src\Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\UI\ConfidenceDlg.cpp">
+      <Filter>src\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -163,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="..\Classes\Common\DelayCall.h">
       <Filter>src\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Classes\UI\ConfidenceDlg.h">
+      <Filter>src\UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

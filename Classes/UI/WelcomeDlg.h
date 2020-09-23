@@ -16,6 +16,7 @@ protected:
 	
 private:
     Button* m_btnLogon;
+	TextField* m_tfdPartID;
 };
 
 

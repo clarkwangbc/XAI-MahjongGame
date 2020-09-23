@@ -15,6 +15,7 @@ GameConfig *GameConfig::getInstance() {     //单例创建全局唯一的GameCon
 
 GameConfig::GameConfig() {
     m_EffectsVolume = 0;
+	m_ParticipantId = "";
     loadConfig();
 }
 
@@ -27,6 +28,7 @@ GameConfig::~GameConfig() {
  */
 void GameConfig::loadConfig() {
     m_EffectsVolume = UserDefault::getInstance()->getFloatForKey("EffectsVolume", 0.8f);
+	m_ParticipantId = UserDefault::getInstance()->getStringForKey("ParticipantID", "");
 }
 
 /**
@@ -34,5 +36,6 @@ void GameConfig::loadConfig() {
  */
 void GameConfig::saveConfig() {
     UserDefault::getInstance()->setFloatForKey("EffectsVolume", m_EffectsVolume);
+	UserDefault::getInstance()->setStringForKey("ParticipantID", m_ParticipantId);
 }
 
