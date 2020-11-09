@@ -6,7 +6,7 @@ import paramiko
 from xml.dom.minidom import parse
 
 # 各种地址
-robot_url = "169.254.84.1"
+robot_url = "169.254.5.179"
 player_cards_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt"
 player_cards_peng_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Peng.txt"
 player_cards_gang_path = "C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Gang.txt"
@@ -429,10 +429,10 @@ def peng_judge_discard():
     discard_pai = player_simple_pai[max_array[0]]
     if discard_pai == player_origin_pai[-1]:
         suggestion = "建议不要碰！"
-        explanation = "碰了后牌型太差了。"
+        explanation = "碰了后剩下的牌不连续了。"
     else:
-        suggestion = "可以碰！"
-        explanation = "碰了后出" + int_2_pai[discard_pai]
+        suggestion = "可以碰！碰了后出" + int_2_pai[discard_pai]
+        explanation = "因为碰了后既可以凑成三个，离胡牌更近一步。"
 
     # test_print(suggestion, explanation)
 
@@ -446,7 +446,7 @@ def gang_judge():
     player_origin_pai = read_player_card(player_cards_gang_path)
     gang_card = player_origin_pai[-1]
     if player_origin_pai[-1] not in player_origin_pai[0:-1]:
-        suggestion = "这里一定要杠。"
+        suggestion = "这里可以要杠。"
         explanation = "杠了后增加牌的番数"
     else:
         origin_score = calc(player_origin_pai[0:-1])
