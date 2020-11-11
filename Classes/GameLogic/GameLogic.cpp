@@ -692,7 +692,7 @@ bool GameLogic::canHu(const uint8_t cbCardIndexTemp[MAX_INDEX], const uint8_t cb
 
 
 /**
- * 平湖判定
+ * 平胡判定
  * @param cbCardIndexTemp
  * @param cbCardCountTemp
  * @param cbCardIndex
@@ -863,7 +863,7 @@ uint8_t GameLogic::danZhang(const uint8_t cbCardCount) {
 }
 
 /**
- * 天湖判断
+ * 天胡判断
  * @param m_cbSendCardCount
  * @param m_cbOutCardCount
  * @return

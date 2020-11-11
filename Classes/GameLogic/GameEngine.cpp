@@ -73,8 +73,8 @@ void GameEngine::init()
     }
 
 	Py_Initialize();
-	PyRun_SimpleString("import mahjong_recommender");
 	log("初始化Python环境");
+	PyRun_SimpleString("import mahjong_recommender_test");	
 }
 
 /**
@@ -236,7 +236,6 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 			if (unsigned(m_cbCardIndex[a][i] != 0))
 			{
 				auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[a][i]));
-
 				if (i != 33) {
 					temp += ",";
 				}
@@ -252,7 +251,7 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 
 	// 将数据保存至指定位置
 	ofstream out_file;
-	out_file.open("C:/Users/clark/MahjongGame/ResultLogs/AILog.txt");
+	out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/AILog.txt");
 	if (!out_file.is_open()) {
 		log("ERROR: OPEN FILE FAILED");
 	}
@@ -336,7 +335,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 
 		// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 		ofstream out_file;
-		out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
+		out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
 		if (!out_file.is_open()) {
 			log("ERROR: OPEN FILE FAILED");
 		}
@@ -346,7 +345,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 		}
 		// 运行python脚本，将结果保存到本地
 		log("运行Python脚本计算");
-		PyRun_SimpleString("mahjong_recommender.normal_discard()");
+		PyRun_SimpleString("mahjong_recommender_test.normal_discard()");
 	}
 
     if (m_cbLeftCardCount > 0)                                                      //暗杠判定，剩下的牌>1才能杠
@@ -372,7 +371,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 
 			// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 			ofstream out_file;
-			out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog.txt");
+			out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
 			if (!out_file.is_open()) {
 				log("ERROR: OPEN FILE FAILED");
 			}
@@ -382,7 +381,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			}
 			// 运行python脚本，将结果保存到本地
 			log("运行Python脚本计算");
-			PyRun_SimpleString("mahjong_recommender.gang_judge()");
+			PyRun_SimpleString("mahjong_recommender_test.gang_judge()");
 		}
         
 		if ((m_cbUserAction[cbCurrentUser] & WIK_G) != 0x0)
@@ -459,7 +458,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 
 					// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 					ofstream out_file;
-					out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Peng.txt");
+					out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog_Peng.txt");
 					if (!out_file.is_open()) {
 						log("ERROR: OPEN FILE FAILED");
 					}
@@ -470,7 +469,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 
 					// 判断是否需要碰牌！
 					log("运行Python脚本计算");
-					PyRun_SimpleString("mahjong_recommender.peng_judge_discard()");
+					PyRun_SimpleString("mahjong_recommender_test.peng_judge_discard()");
 				}
                 if ((m_cbUserAction[i] && WIK_P) != 0)
                 {
@@ -509,7 +508,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 
 						// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 						ofstream out_file;
-						out_file.open("C:/Users/clark/MahjongGame/ResultLogs/PlayerLog_Gang.txt");
+						out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog_Gang.txt");
 						if (!out_file.is_open()) {
 							log("ERROR: OPEN FILE FAILED");
 						}
@@ -520,7 +519,7 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 
 						// 判断是否需要杠牌！
 						log("运行Python脚本计算");
-						PyRun_SimpleString("mahjong_recommender.gang_judge()");
+						PyRun_SimpleString("mahjong_recommender_test.gang_judge()");
 					}
                 }
             }

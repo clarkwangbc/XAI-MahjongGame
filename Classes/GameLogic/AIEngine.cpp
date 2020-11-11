@@ -244,6 +244,7 @@ void AIEngine::sendCard()
 	CMD_C_OutCard OutCard;
 	memset(&OutCard, 0, sizeof(CMD_C_OutCard));
 	OutCard.cbCardData = m_cbSendCardData;
+	//log(OutCard.cbCardData);
 	m_GameEngine->onUserOutCard(OutCard);
 	// log("Once");
 	// cocos2d::log("机器人出牌 延迟1秒！ :%x");

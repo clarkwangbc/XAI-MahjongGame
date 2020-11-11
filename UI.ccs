@@ -207,6 +207,7 @@
           <Image Name="flag_guo.png" />
           <Image Name="flag_hu.png" />
           <Image Name="flag_peng.png" />
+          <Image Name="flag_ting.png" />
           <Image Name="im_defaulthead.png" />
           <Image Name="im_defaulthead_0.png" />
           <Image Name="im_defaulthead_1.png" />
@@ -254,6 +255,7 @@
         </Folder>
         <Project Name="AlertLayer.csd" Type="Layer" />
         <TTF Name="arial.ttf" />
+        <Project Name="BtnControl.csd" Type="Node" />
         <Project Name="BtnGang.csd" Type="Node" />
         <Project Name="BtnGuo.csd" Type="Node" />
         <Project Name="BtnHu.csd" Type="Node" />

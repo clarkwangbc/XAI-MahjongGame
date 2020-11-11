@@ -13,14 +13,18 @@
 #include "AlertDlg.h"
 #include "DialogManager.h"
 #include <fstream>
+#include <Python.h>
 
 using namespace std;
 
-static uint8_t USER_OP_MAX_TIME = 99; // 出牌倒计时秒数
+static uint8_t USER_OP_MAX_TIME = 10; // 出牌倒计时秒数
 
 GameLayer::GameLayer()  : IDialog() {
     RegDialogCtrl("Button_Exit", m_btnExit);
     RegDialogCtrl("Button_Set", m_btnSetting);
+
+	RegDialogCtrl("Button_Control", m_btnControl);
+
     RegDialogCtrl("OperateNotifyGroup", m_pOperateNotifyGroup);
     RegDialogCtrl("Text_LeftCard", m_pTextCardNum);
     for (int i = 0; i < GAME_PLAYER; i++) {
@@ -36,6 +40,10 @@ GameLayer::GameLayer()  : IDialog() {
     m_pOutCard = NULL;
     m_iOutCardTimeOut = USER_OP_MAX_TIME;
     m_MeChairID = 0;
+	
+	// AI默认是否自动打牌
+	m_AIAutoPlay = true;
+
     initGame();
 }
 
@@ -62,6 +70,10 @@ void GameLayer::onUILoaded() {
         // 游戏设置按钮
         DialogManager::shared()->showDialog(SettingDlg::create());
     });
+
+
+
+
     // 玩家加入游戏
     RealPlayer *pIPlayer = new RealPlayer(IPlayer::MALE, this);
     m_GameEngine->onUserEnter(pIPlayer);
@@ -167,7 +179,7 @@ bool GameLayer::onOutCardEvent(CMD_S_OutCard OutCard) {
     }
     switch (cbViewID) {
         case 0: {
-			DialogManager::shared()->showDialog(ConfidenceDlg::create());
+			//DialogManager::shared()->showDialog(ConfidenceDlg::create());
 			//用户出牌记录
 			ofstream fCardLog;
 			std::string filename = GameConfig::getInstance()->m_ParticipantId + "_cardlog.txt";
@@ -496,35 +508,45 @@ void GameLayer::sendCardTimerUpdate(float) {
 bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
     m_pOperateNotifyGroup->removeAllChildren();
     m_pOperateNotifyGroup->setVisible(true);
-    this->unschedule(schedule_selector(GameLayer::sendCardTimerUpdate));
-    this->schedule(schedule_selector(GameLayer::sendCardTimerUpdate), 1.0f);    //出牌计时
-    sendCardTimerUpdate(1.0f);//立即执行
+    //this->unschedule(schedule_selector(GameLayer::sendCardTimerUpdate));
+    //this->schedule(schedule_selector(GameLayer::sendCardTimerUpdate), 1.0f);    //出牌计时
+    //sendCardTimerUpdate(1.0f);//立即执行
     m_pTextCardNum->setString(utility::toString((int) m_cbLeftCardCount));
     uint8_t cbViewID = m_GameEngine->switchViewChairID(SendCard.cbCurrentUser, m_MeChairID);
     m_bOperate = false;
     switch (cbViewID) {
-        case 0: {
-            m_bOperate = true;   //允许选牌
-            ui::Layout *pRecvCardList = dynamic_cast<ui::Layout *>(UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], utility::toString("RecvHandCard_0")));
-            pRecvCardList->removeAllChildren();
-            ui::ImageView *pCard = UIHelper::createHandCardImageView(cbViewID, SendCard.cbCardData);
-            pCard->setAnchorPoint(Vec2(0, 0));
-            pCard->setPosition(Vec2(0, 0));
-            pCard->setTouchEnabled(true);
-            pCard->setTag(SendCard.cbCardData);
-            pCard->setName(utility::toString("bt_card_", (int) SendCard.cbCardData));
-            pCard->addTouchEventListener(CC_CALLBACK_2(GameLayer::onCardTouch, this));
-            pRecvCardList->addChild(pCard);
-            UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], "ting_0")->setVisible(false); //拿到牌，隐藏听牌界面
-            if (SendCard.cbActionMask != WIK_NULL) {//发的牌存在动作，模拟发送操作通知
-                CMD_S_OperateNotify OperateNotify;
-                memset(&OperateNotify, 0, sizeof(CMD_S_OperateNotify));
-                OperateNotify.cbActionMask = SendCard.cbActionMask;
-                OperateNotify.cbActionCard = SendCard.cbCardData;
-                OperateNotify.cbGangCount = SendCard.cbGangCount;
-                memcpy(OperateNotify.cbGangCard, SendCard.cbGangCard, sizeof(OperateNotify.cbGangCard));
-                showOperateNotify(OperateNotify);
-            }
+        case 0: {		
+			this->unschedule(schedule_selector(GameLayer::sendCardTimerUpdate));
+			this->schedule(schedule_selector(GameLayer::sendCardTimerUpdate), 1.0f);    //出牌计时
+			sendCardTimerUpdate(1.0f);//立即执行
+
+			ui::Layout *pRecvCardList = dynamic_cast<ui::Layout *>(UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], utility::toString("RecvHandCard_0")));
+			pRecvCardList->removeAllChildren();
+			ui::ImageView *pCard = UIHelper::createHandCardImageView(cbViewID, SendCard.cbCardData);
+			pCard->setAnchorPoint(Vec2(0, 0));
+			pCard->setPosition(Vec2(0, 0));
+			pCard->setTouchEnabled(true);
+			pCard->setTag(SendCard.cbCardData);
+			pCard->setName(utility::toString("bt_card_", (int)SendCard.cbCardData));
+			pCard->addTouchEventListener(CC_CALLBACK_2(GameLayer::onCardTouch, this));
+			pRecvCardList->addChild(pCard);
+			UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], "ting_0")->setVisible(false); //拿到牌，隐藏听牌界面
+			if (SendCard.cbActionMask != WIK_NULL) {//发的牌存在动作，模拟发送操作通知
+				CMD_S_OperateNotify OperateNotify;
+				memset(&OperateNotify, 0, sizeof(CMD_S_OperateNotify));
+				OperateNotify.cbActionMask = SendCard.cbActionMask;
+				OperateNotify.cbActionCard = SendCard.cbCardData;
+				OperateNotify.cbGangCount = SendCard.cbGangCount;
+				memcpy(OperateNotify.cbGangCard, SendCard.cbGangCard, sizeof(OperateNotify.cbGangCard));
+				showOperateNotify(OperateNotify);
+			}
+
+			//加入是否同意的监听按钮，并倒计时
+			//检测是否倒计时之前是否同意出牌
+			//如果同意出牌，则倒计时结束时自动出牌
+			//若倒计时结束前点击按钮，则切换UI，将控制权交给用户
+			//m_bOperate = true;
+			approvalCheck();
             break;
         }
         case 1:
@@ -545,6 +567,74 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
         }
     }
     return true;
+}
+
+
+/*
+* 切换出牌模式
+*/
+void GameLayer::approvalCheck() {
+	/*
+	Node *pNode = CSLoader::createNode("res/btnControl.csb");
+	pNode->setPosition(Vec2(250.0f, 65.0f));
+	ui::Button *pBtn = dynamic_cast<ui::Button *>(pNode->getChildren().at(0));
+	pBtn->addTouchEventListener([this, pBtn](Ref *ref, ui::Widget::TouchEventType eventType) {
+		ui::Button *pRef = dynamic_cast<ui::Button *>(ref);
+		if (pRef != NULL && pRef == pBtn) {
+			if (eventType == ui::Widget::TouchEventType::ENDED) {
+				m_bOperate = true;
+			}
+		}
+	});
+	*/
+	m_AIAutoPlay = true;
+	
+	this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 5.0f);
+
+	//添加切换按钮
+	m_btnControl->addClickEventListener([this](Ref* sender) {
+		//auto alert = AlertDlg::create();
+		//alert->setAlertType(AlertDlg::ENUM_CONFIRM);
+		//alert->setText("切换玩家操作");
+		//DialogManager::shared()->showDialog(alert);
+		m_AIAutoPlay = false;
+		m_bOperate = true;
+		this->unschedule(schedule_selector(GameLayer::autoOutCard));
+	});
+}
+
+/*
+* 自动出牌模式
+*/
+void GameLayer::autoOutCard(float f) {
+	log("运行Python脚本计算");
+	//PyRun_SimpleString("mahjong_recommender_test.normal_discard()");
+	if (Py_IsInitialized())
+	{
+		PyObject * pModule = NULL; //声明变量
+		PyObject * pFunc = NULL; // 声明变量
+		pModule = PyImport_ImportModule("mahjong_recommender_test");
+		if (pModule)
+		{
+			pFunc = PyObject_GetAttrString(pModule, "normal_discard");//这里是要调用的函数名
+			//PyObject* args = Py_BuildValue("");//给python函数参数赋值
+			PyObject* pArgs = PyTuple_New(0);
+			PyObject* pRet = NULL;
+			pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
+
+			int res = 0;
+			PyArg_Parse(pRet, "i", &res);//转换返回类型
+			cout << "res:" << res << endl;
+			int res16 = res / 9 * 16 + res % 9; //注意结果要转换为16进制
+			
+			CCLOG("out card");
+			CMD_C_OutCard OutCard;
+			memset(&OutCard, 0, sizeof(CMD_C_OutCard));
+			OutCard.cbCardData = static_cast<uint8_t>(res16);
+			m_GameEngine->onUserOutCard(OutCard);
+		}
+	}
+	
 }
 
 
