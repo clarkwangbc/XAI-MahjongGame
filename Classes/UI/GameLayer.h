@@ -25,6 +25,9 @@ private:
     ui::Text *m_pTextCardNum;           //剩余牌数量
     uint8_t m_MeChairID;                //自己的位置
     uint8_t m_iOutCardTimeOut;          //操作时间
+
+	ui::Text *m_pAutoStatusText;		//自动出牌状态
+
 //游戏变量
 private:
     tagWeaveItem m_WeaveItemArray[GAME_PLAYER][MAX_WEAVE];                 //组合
@@ -40,8 +43,10 @@ private:
     float m_outY = 30;                                                     //偏移
     float m_cardPosY = 0.0f;                                               //偏移
 
-	//AI 是否自动打牌
-	bool m_AIAutoPlay;														
+	
+	bool m_AIAutoPlay;													   // AI是否自动打牌
+	CMD_C_OutCard AIOutCard;											   // 建议玩家出的牌
+
 
 public:
     GameLayer();    // 构造函数

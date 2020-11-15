@@ -22,11 +22,13 @@ static uint8_t USER_OP_MAX_TIME = 10; // 出牌倒计时秒数
 GameLayer::GameLayer()  : IDialog() {
     RegDialogCtrl("Button_Exit", m_btnExit);
     RegDialogCtrl("Button_Set", m_btnSetting);
-
-	RegDialogCtrl("Button_Control", m_btnControl);
-
     RegDialogCtrl("OperateNotifyGroup", m_pOperateNotifyGroup);
     RegDialogCtrl("Text_LeftCard", m_pTextCardNum);
+
+	//自动出牌
+	RegDialogCtrl("Button_Control", m_btnControl);
+	RegDialogCtrl("Auto_Status_Text", m_pAutoStatusText);
+
     for (int i = 0; i < GAME_PLAYER; i++) {
         //初始化头像节点数组
         RegDialogCtrl(utility::toString("face_frame_", i), m_FaceFrame[i]);
@@ -43,6 +45,7 @@ GameLayer::GameLayer()  : IDialog() {
 	
 	// AI默认是否自动打牌
 	m_AIAutoPlay = true;
+	m_pAutoStatusText = NULL;
 
     initGame();
 }
@@ -71,6 +74,9 @@ void GameLayer::onUILoaded() {
         DialogManager::shared()->showDialog(SettingDlg::create());
     });
 
+	m_btnControl->setTouchEnabled(false);
+	m_btnControl->setBright(false);
+
 
 
 
@@ -95,6 +101,10 @@ void GameLayer::initGame() {
     m_cbBankerChair = INVALID_CHAIR;
     memset(&m_cbWeaveItemCount, 0, sizeof(m_cbWeaveItemCount));
     memset(&m_cbDiscardCount, 0, sizeof(m_cbDiscardCount));
+
+	//初始化自动出牌
+	memset(&AIOutCard, 0, sizeof(CMD_C_OutCard));
+
     for (uint8_t i = 0; i < GAME_PLAYER; i++) {
         memset(m_cbCardIndex[i], 0, sizeof(m_cbCardIndex[i]));
         memset(m_WeaveItemArray[i], 0, sizeof(m_WeaveItemArray[i]));
@@ -131,6 +141,9 @@ bool GameLayer::onGameStartEvent(CMD_S_GameStart GameStart) {
     GameLogic::switchToCardIndex(GameStart.cbCardData, MAX_COUNT - 1, m_cbCardIndex[m_MeChairID]);
     //界面显示
     m_pTextCardNum->setString(utility::toString((int) m_cbLeftCardCount));
+
+	m_pAutoStatusText->setString("模式：自动");
+
     showAndUpdateHandCard();
     showAndUpdateDiscardCard();
     return true;
@@ -516,6 +529,8 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
     m_bOperate = false;
     switch (cbViewID) {
         case 0: {		
+			
+			//为玩家设置倒计时
 			this->unschedule(schedule_selector(GameLayer::sendCardTimerUpdate));
 			this->schedule(schedule_selector(GameLayer::sendCardTimerUpdate), 1.0f);    //出牌计时
 			sendCardTimerUpdate(1.0f);//立即执行
@@ -545,8 +560,61 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			//检测是否倒计时之前是否同意出牌
 			//如果同意出牌，则倒计时结束时自动出牌
 			//若倒计时结束前点击按钮，则切换UI，将控制权交给用户
-			//m_bOperate = true;
-			approvalCheck();
+
+			//添加切换按钮
+			m_btnControl->setTouchEnabled(true);
+			m_btnControl->setBright(true);
+			m_pAutoStatusText->setString("模式：自动");
+
+			log("运行Python脚本计算");
+			if (Py_IsInitialized())
+			{
+				PyObject * pModule = NULL; //声明变量
+				PyObject * pFunc = NULL; // 声明变量
+				pModule = PyImport_ImportModule("mahjong_recommender_test");
+				if (pModule)
+				{
+					pFunc = PyObject_GetAttrString(pModule, "normal_discard");//这里是要调用的函数名
+					PyObject* pArgs = PyTuple_New(0);
+					PyObject* pRet = NULL;
+					pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
+
+					int res = 0;
+					PyArg_Parse(pRet, "i", &res);//转换返回类型
+					int res16 = res / 9 * 16 + res % 9; //注意结果要转换为16进制
+			
+					AIOutCard.cbCardData = static_cast<uint8_t>(res16);
+
+					//自动选牌，被选中的牌会凸显出来
+					if (SendCard.cbCardData == AIOutCard.cbCardData) { //如果推荐出牌是刚摸上来的牌
+						m_startVec = pCard->getPosition();
+						pCard->setPosition(m_startVec + Vec2(0, m_outY));
+					}
+					else{ //如果推荐的出牌是原来手牌中的牌
+						ui::Layout *pHandCard0 = dynamic_cast<ui::Layout *>(UIHelper::seekNodeByName(m_PlayerPanel[0], "HandCard_0"));
+						const auto &aChildren = pHandCard0->getChildren();
+						for (auto &subWidget : aChildren) {
+							Node *child = dynamic_cast<Node *>(subWidget);
+							if (child->getTag() == AIOutCard.cbCardData) {
+								m_startVec = child->getPosition();
+								child->setPosition(m_startVec + Vec2(0, m_outY));
+							}
+						}
+					}					
+				}
+			}
+
+			// 切换出牌模式
+			m_AIAutoPlay = true;
+			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 5.0f);
+			m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
+				m_AIAutoPlay = false;
+				m_bOperate = true;
+				m_pAutoStatusText->setString("模式：手动");
+				m_btnControl->setTouchEnabled(false);
+				m_btnControl->setBright(false);
+				this->unschedule(schedule_selector(GameLayer::autoOutCard));
+			});
             break;
         }
         case 1:
@@ -554,6 +622,9 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
         case 3:
         default:
             m_bOperate = false;  //不允许操作
+			m_btnControl->setTouchEnabled(false);
+			m_btnControl->setBright(false);
+			m_pAutoStatusText->setString("模式：自动");
             break;
     }
     for (int i = 0; i < GAME_PLAYER; i++) {
@@ -571,70 +642,10 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 
 
 /*
-* 切换出牌模式
-*/
-void GameLayer::approvalCheck() {
-	/*
-	Node *pNode = CSLoader::createNode("res/btnControl.csb");
-	pNode->setPosition(Vec2(250.0f, 65.0f));
-	ui::Button *pBtn = dynamic_cast<ui::Button *>(pNode->getChildren().at(0));
-	pBtn->addTouchEventListener([this, pBtn](Ref *ref, ui::Widget::TouchEventType eventType) {
-		ui::Button *pRef = dynamic_cast<ui::Button *>(ref);
-		if (pRef != NULL && pRef == pBtn) {
-			if (eventType == ui::Widget::TouchEventType::ENDED) {
-				m_bOperate = true;
-			}
-		}
-	});
-	*/
-	m_AIAutoPlay = true;
-	
-	this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 5.0f);
-
-	//添加切换按钮
-	m_btnControl->addClickEventListener([this](Ref* sender) {
-		//auto alert = AlertDlg::create();
-		//alert->setAlertType(AlertDlg::ENUM_CONFIRM);
-		//alert->setText("切换玩家操作");
-		//DialogManager::shared()->showDialog(alert);
-		m_AIAutoPlay = false;
-		m_bOperate = true;
-		this->unschedule(schedule_selector(GameLayer::autoOutCard));
-	});
-}
-
-/*
 * 自动出牌模式
 */
 void GameLayer::autoOutCard(float f) {
-	log("运行Python脚本计算");
-	//PyRun_SimpleString("mahjong_recommender_test.normal_discard()");
-	if (Py_IsInitialized())
-	{
-		PyObject * pModule = NULL; //声明变量
-		PyObject * pFunc = NULL; // 声明变量
-		pModule = PyImport_ImportModule("mahjong_recommender_test");
-		if (pModule)
-		{
-			pFunc = PyObject_GetAttrString(pModule, "normal_discard");//这里是要调用的函数名
-			//PyObject* args = Py_BuildValue("");//给python函数参数赋值
-			PyObject* pArgs = PyTuple_New(0);
-			PyObject* pRet = NULL;
-			pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
-
-			int res = 0;
-			PyArg_Parse(pRet, "i", &res);//转换返回类型
-			cout << "res:" << res << endl;
-			int res16 = res / 9 * 16 + res % 9; //注意结果要转换为16进制
-			
-			CCLOG("out card");
-			CMD_C_OutCard OutCard;
-			memset(&OutCard, 0, sizeof(CMD_C_OutCard));
-			OutCard.cbCardData = static_cast<uint8_t>(res16);
-			m_GameEngine->onUserOutCard(OutCard);
-		}
-	}
-	
+	m_GameEngine->onUserOutCard(AIOutCard);
 }
 
 
@@ -1234,7 +1245,7 @@ void GameLayer::onCardTouch(Ref *ref, ui::Widget::TouchEventType eventType) {
                 }
                 case ui::Widget::TouchEventType::CANCELED:
                 case ui::Widget::TouchEventType::ENDED: {
-                    m_pOutCard = NULL;                             //结束出牌状态
+					m_pOutCard = NULL;                             //结束出牌状态
                     Vec2 endVec = pCard->getPosition();
                     if (endVec.y - m_startVec.y > 118) {
                         CCLOG("out card");
