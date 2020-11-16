@@ -46,7 +46,7 @@ private:
 	
 	bool m_AIAutoPlay;													   // AI是否自动打牌
 	CMD_C_OutCard AIOutCard;											   // 建议玩家出的牌
-
+	CMD_S_OperateNotify AIOperateNotify;								   // 操作模式
 
 public:
     GameLayer();    // 构造函数
@@ -65,8 +65,8 @@ public:
     void sendCardTimerUpdate(float f);  //倒计时
     void onCardTouch(Ref *ref, ui::Widget::TouchEventType eventType);   //触摸牌的事件
 
-	void approvalCheck();
 	void autoOutCard(float f);
+	void autoDealEvent(float f);
 
 private:
     virtual bool onUserEnterEvent(IPlayer *pIPlayer);            //玩家进入事件

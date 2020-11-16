@@ -104,6 +104,7 @@ void GameLayer::initGame() {
 
 	//初始化自动出牌
 	memset(&AIOutCard, 0, sizeof(CMD_C_OutCard));
+	memset(&AIOperateNotify, 0, sizeof(CMD_S_OperateNotify));
 
     for (uint8_t i = 0; i < GAME_PLAYER; i++) {
         memset(m_cbCardIndex[i], 0, sizeof(m_cbCardIndex[i]));
@@ -340,7 +341,7 @@ bool GameLayer::onOutCardEvent(CMD_S_OutCard OutCard) {
  * @return
  */
 bool GameLayer::onOperateNotifyEvent(CMD_S_OperateNotify OperateNotify) {
-    return showOperateNotify(OperateNotify);
+	return showOperateNotify(OperateNotify);
 }
 
 /**
@@ -561,6 +562,9 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			//如果同意出牌，则倒计时结束时自动出牌
 			//若倒计时结束前点击按钮，则切换UI，将控制权交给用户
 
+			// 切换出牌模式
+			m_AIAutoPlay = true;
+
 			//添加切换按钮
 			m_btnControl->setTouchEnabled(true);
 			m_btnControl->setBright(true);
@@ -571,7 +575,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			{
 				PyObject * pModule = NULL; //声明变量
 				PyObject * pFunc = NULL; // 声明变量
-				pModule = PyImport_ImportModule("mahjong_recommender_test");
+				pModule = PyImport_ImportModule("mahjong_recommender");
 				if (pModule)
 				{
 					pFunc = PyObject_GetAttrString(pModule, "normal_discard");//这里是要调用的函数名
@@ -582,6 +586,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 					int res = 0;
 					PyArg_Parse(pRet, "i", &res);//转换返回类型
 					int res16 = res / 9 * 16 + res % 9; //注意结果要转换为16进制
+					cout << res <<endl;
 			
 					AIOutCard.cbCardData = static_cast<uint8_t>(res16);
 
@@ -603,14 +608,13 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 					}					
 				}
 			}
-
-			// 切换出牌模式
-			m_AIAutoPlay = true;
+		
 			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 5.0f);
 			m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
 				m_AIAutoPlay = false;
 				m_bOperate = true;
 				m_pAutoStatusText->setString("模式：手动");
+				m_pAutoStatusText->setColor(Color3B(255, 0, 0));
 				m_btnControl->setTouchEnabled(false);
 				m_btnControl->setBright(false);
 				this->unschedule(schedule_selector(GameLayer::autoOutCard));
@@ -625,6 +629,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			m_btnControl->setTouchEnabled(false);
 			m_btnControl->setBright(false);
 			m_pAutoStatusText->setString("模式：自动");
+			m_pAutoStatusText->setColor(Color3B(255, 255, 255));
             break;
     }
     for (int i = 0; i < GAME_PLAYER; i++) {
@@ -744,8 +749,74 @@ bool GameLayer::showOperateNotify(CMD_S_OperateNotify OperateNotify) {
         x -= 160.0f;
     }
     loadUI("res/BtnGuo.csb", x, y, OperateNotify.cbActionCard);
+
+	AIOperateNotify = OperateNotify;
+	this->scheduleOnce(schedule_selector(GameLayer::autoDealEvent), 1.0f);
+
     return true;
 }
+
+/*
+* 自动处理模式
+*/
+void GameLayer::autoDealEvent(float f) {
+	// cocos2d::log("机器人接收到操作通知事件");
+	if (AIOperateNotify.cbActionMask == WIK_NULL)
+	{
+		return; //无动作
+	}
+	CMD_C_OperateCard OperateCard;
+	memset(&OperateCard, 0, sizeof(CMD_C_OperateCard)); //重置内存
+	OperateCard.cbOperateUser = m_MeChairID;            //操作的玩家
+	if ((AIOperateNotify.cbActionMask & WIK_H) != 0)
+	{ //胡的优先级最高
+		OperateCard.cbOperateCode = WIK_H;
+		OperateCard.cbOperateCard = AIOperateNotify.cbActionCard;
+	}
+	else if ((AIOperateNotify.cbActionMask & WIK_G) != 0)
+	{ //杠的优先级第二
+		OperateCard.cbOperateCode = WIK_G;
+		OperateCard.cbOperateCard = AIOperateNotify.cbGangCard[0]; //杠第一个
+	}
+	else if ((AIOperateNotify.cbActionMask & WIK_P) != 0)
+	{ //碰的优先级第三
+		OperateCard.cbOperateCode = WIK_P;
+		OperateCard.cbOperateCard = AIOperateNotify.cbActionCard;
+
+		log("运行Python脚本计算");
+		if (Py_IsInitialized())
+		{
+			PyObject * pModule = NULL; //声明变量
+			PyObject * pFunc = NULL; // 声明变量
+			pModule = PyImport_ImportModule("mahjong_recommender");
+			if (pModule)
+			{
+				pFunc = PyObject_GetAttrString(pModule, "peng_judge_discard");//这里是要调用的函数名
+				PyObject* pArgs = PyTuple_New(0);
+				PyObject* pRet = NULL;
+				pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
+
+				int res1 = 0, res2 = 0;
+				PyArg_ParseTuple(pRet, "i|i", &res1, &res2);//转换返回类型
+				int res16 = res2 / 9 * 16 + res2 % 9; //注意结果要转换为16进制
+				cout << res16 << endl;
+				AIOutCard.cbCardData = static_cast<uint8_t>(res16);
+
+				if (res1) {
+					OperateCard.cbOperateCode = WIK_P;
+					OperateCard.cbOperateCard = AIOperateNotify.cbActionCard;
+				}
+				else {
+					OperateCard.cbOperateCode = WIK_NULL;
+				}
+			}
+		}
+
+	}
+	m_GameEngine->onUserOperateCard(OperateCard);
+	return;
+}
+
 
 /**
  * 显示手上的牌

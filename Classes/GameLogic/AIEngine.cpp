@@ -87,7 +87,7 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
         }
         else
         {
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 0.8f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
         }
     }
     return true;
@@ -100,10 +100,10 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
  */
 bool AIEngine::onOutCardEvent(CMD_S_OutCard OutCard)
 {
-    log("出牌人 %d，坐席 %d", OutCard.cbOutCardUser, m_MeChairID);
+    //log("出牌人 %d，坐席 %d", OutCard.cbOutCardUser, m_MeChairID);
     if (OutCard.cbOutCardUser == m_MeChairID)
     {
-        log("玩家接收到出牌事件");
+        //log("玩家接收到出牌事件");
         m_cbCardIndex[m_MeChairID][GameLogic::switchToCardIndex(OutCard.cbOutCardData)]--;
     }
     m_cbDiscardCard[OutCard.cbOutCardUser][m_cbDiscardCount[OutCard.cbOutCardUser]++] = OutCard.cbOutCardData;
@@ -175,7 +175,7 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult)
             uint8_t cbTempCardData[MAX_COUNT] = {0};
             GameLogic::switchToCardData(m_cbCardIndex[m_MeChairID], cbTempCardData, static_cast<uint8_t>(MAX_COUNT - 1 - (m_cbWeaveItemCount[m_MeChairID] * 3))); //碰完需要出一张
             m_cbSendCardData = cbTempCardData[0];
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 0.5f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
         }
         break;
     }
@@ -238,20 +238,17 @@ bool AIEngine::onGameEndEvent(CMD_S_GameEnd &GameEnd)
  */
 void AIEngine::sendCard()
 {
-	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
-	AIEngine::updateOnce(1);
+	// int delayTime = rand() % 5 + 1;
+	// AIEngine::updateOnce(delayTime);
 	// cocos2d::log("机器人出牌:%x", m_cbSendCardData);
 	CMD_C_OutCard OutCard;
 	memset(&OutCard, 0, sizeof(CMD_C_OutCard));
 	OutCard.cbCardData = m_cbSendCardData;
-	//log(OutCard.cbCardData);
-	m_GameEngine->onUserOutCard(OutCard);
-	// log("Once");
-	// cocos2d::log("机器人出牌 延迟1秒！ :%x");
-	//this->scheduleOnce(schedule_selector(AIEngine::updateOnce), 2.0f);
-	
+	m_GameEngine->onUserOutCard(OutCard);	
 }
 
+
+/*
 void  AIEngine::updateOnce(int second)
 {
 	time_t start_time, cur_time;//定义时间变量
@@ -261,5 +258,4 @@ void  AIEngine::updateOnce(int second)
 		time(&cur_time);
 	} while ((cur_time - start_time) < second);
 }
- 
- 
+*/

@@ -74,7 +74,8 @@ void GameEngine::init()
 
 	Py_Initialize();
 	log("初始化Python环境");
-	PyRun_SimpleString("import mahjong_recommender_test");	
+	PyRun_SimpleString("import mahjong_recommender");	
+
 }
 
 /**
@@ -344,8 +345,8 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			out_file.close();
 		}
 		// 运行python脚本，将结果保存到本地
-		log("运行Python脚本计算");
-		PyRun_SimpleString("mahjong_recommender_test.normal_discard()");
+		//log("运行Python脚本计算");
+		//PyRun_SimpleString("mahjong_recommender.normal_discard()");
 	}
 
     if (m_cbLeftCardCount > 0)                                                      //暗杠判定，剩下的牌>1才能杠
@@ -380,8 +381,8 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 				out_file.close();
 			}
 			// 运行python脚本，将结果保存到本地
-			log("运行Python脚本计算");
-			PyRun_SimpleString("mahjong_recommender_test.gang_judge()");
+			//log("运行Python脚本计算");
+			//PyRun_SimpleString("mahjong_recommender.gang_judge()");
 		}
         
 		if ((m_cbUserAction[cbCurrentUser] & WIK_G) != 0x0)
@@ -468,8 +469,8 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 					}
 
 					// 判断是否需要碰牌！
-					log("运行Python脚本计算");
-					PyRun_SimpleString("mahjong_recommender_test.peng_judge_discard()");
+					//log("运行Python脚本计算");
+					//PyRun_SimpleString("mahjong_recommender_test.peng_judge_discard()");
 				}
                 if ((m_cbUserAction[i] && WIK_P) != 0)
                 {
@@ -518,8 +519,8 @@ bool GameEngine::estimateUserRespond(uint8_t cbCurrentUser, uint8_t cbCurrentCar
 						}
 
 						// 判断是否需要杠牌！
-						log("运行Python脚本计算");
-						PyRun_SimpleString("mahjong_recommender_test.gang_judge()");
+						//log("运行Python脚本计算");
+						//PyRun_SimpleString("mahjong_recommender_test.gang_judge()");
 					}
                 }
             }
@@ -710,6 +711,32 @@ bool GameEngine::onUserOperateCard(CMD_C_OperateCard OperateCard)
         {
             uint8_t cbRemoveCard[] = {cbTargetCard, cbTargetCard};                                  //设置两张牌
             GameLogic::removeCard(m_cbCardIndex[cbTargetUser], cbRemoveCard, sizeof(cbRemoveCard)); //手上删除这两张牌
+
+			log("记录玩家手牌");
+			// 这里开始记录玩家的手牌数据
+			std::string str = "";
+			int num = 0;
+			for (int i = 0; i < 34; i++)
+			{
+				if (unsigned(m_cbCardIndex[0][i] != 0))
+				{
+					auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
+					num += unsigned(m_cbCardIndex[0][i]);
+					str.append(temp);
+				}
+			}
+
+			// 这里存储下玩家手牌的数据，并将数据保存至指定位置
+			ofstream out_file;
+			out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
+			if (!out_file.is_open()) {
+				log("ERROR: OPEN FILE FAILED");
+			}
+			else {
+				out_file << str << endl;
+				out_file.close();
+			}
+
 			break;
         }
         case WIK_G: //杠牌操作
