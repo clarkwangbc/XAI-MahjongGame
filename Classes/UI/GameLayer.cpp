@@ -585,7 +585,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 
 					int res = 0;
 					PyArg_Parse(pRet, "i", &res);//转换返回类型
-					int res16 = res / 9 * 16 + res % 9; //注意结果要转换为16进制
+					int res16 = (res-1) / 9 * 16 + (res-1) % 9 + 1; //注意结果要转换为16进制
 					cout << res <<endl;
 			
 					AIOutCard.cbCardData = static_cast<uint8_t>(res16);
@@ -798,7 +798,7 @@ void GameLayer::autoDealEvent(float f) {
 
 				int res1 = 0, res2 = 0;
 				PyArg_ParseTuple(pRet, "i|i", &res1, &res2);//转换返回类型
-				int res16 = res2 / 9 * 16 + res2 % 9; //注意结果要转换为16进制
+				int res16 = (res2-1) / 9 * 16 + (res2-1) % 9 + 1; //注意结果要转换为16进制
 				cout << res16 << endl;
 				AIOutCard.cbCardData = static_cast<uint8_t>(res16);
 
