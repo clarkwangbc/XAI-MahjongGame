@@ -8,6 +8,7 @@
 #include "DelayCall.h"
 #include <iostream>
 #include <windows.h>
+#include <Python.h>
 
 using namespace std;
 
@@ -243,10 +244,39 @@ void AIEngine::sendCard()
 	// cocos2d::log("机器人出牌:%x", m_cbSendCardData);
 	CMD_C_OutCard OutCard;
 	memset(&OutCard, 0, sizeof(CMD_C_OutCard));
-	OutCard.cbCardData = m_cbSendCardData;
-	m_GameEngine->onUserOutCard(OutCard);	
-}
 
+	uint8_t outcard_id = 0;
+	int res = 0;
+	log("运行Python脚本计算");
+	if (Py_IsInitialized())
+	{
+		PyObject * pModule = NULL; //声明变量
+		PyObject * pFunc = NULL; // 声明变量
+		pModule = PyImport_ImportModule("mahjong_recommender");
+		if (pModule)
+		{
+			pFunc = PyObject_GetAttrString(pModule, "ai_normal_discard");//这里是要调用的函数名
+			PyObject* pArgs = PyTuple_New(0);
+			PyObject* pRet = NULL;
+			pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
+		
+			PyArg_Parse(pRet, "i", &res);//转换返回类型
+			int res16 = (res - 1) / 9 * 16 + (res - 1) % 9 + 1; //注意结果要转换为16进制
+			cout << res << endl;
+
+			outcard_id = static_cast<uint8_t>(res16);;
+		}
+	}
+	if (m_cbCardIndex[m_MeChairID][res-1] != 0) {
+		OutCard.cbCardData = outcard_id;
+	}
+	else {
+		OutCard.cbCardData = m_cbSendCardData;
+	}
+
+	m_GameEngine->onUserOutCard(OutCard);
+		
+}
 
 /*
 void  AIEngine::updateOnce(int second)

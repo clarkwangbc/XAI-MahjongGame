@@ -10,6 +10,7 @@ player_cards_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/P
 player_cards_peng_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog_Peng.txt"
 player_cards_gang_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog_Gang.txt"
 ai_card_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/AILog.txt"
+ai_player_card_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/AIPlayerLog.txt"
 
 game_config_path = "C:/Users/clark/AppData/Local/cocostudio-mahjong/UserDefault.xml"
 
@@ -456,3 +457,12 @@ def gang_judge():
             # suggestion = "这里一定要杠。"
             # explanation = "杠了后既增加牌的番数，又不怎么破坏现有的牌型。"
     return gang
+
+# AI 出牌
+def ai_normal_discard():
+    # 计算
+    chu_pai_prob, player_simple_pai, player_origin_pai = chu_pai(ai_player_card_path)
+    avoid_peng = avoid_pai(ai_card_path)
+    chu, suggestion, explanation = contrast_explain(player_origin_pai, player_simple_pai, chu_pai_prob, avoid_peng)
+
+    return pai_2_int[chu]

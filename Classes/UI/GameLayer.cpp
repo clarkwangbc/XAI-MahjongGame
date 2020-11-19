@@ -529,8 +529,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
     uint8_t cbViewID = m_GameEngine->switchViewChairID(SendCard.cbCurrentUser, m_MeChairID);
     m_bOperate = false;
     switch (cbViewID) {
-        case 0: {		
-			
+        case 0: {					
 			//为玩家设置倒计时
 			this->unschedule(schedule_selector(GameLayer::sendCardTimerUpdate));
 			this->schedule(schedule_selector(GameLayer::sendCardTimerUpdate), 1.0f);    //出牌计时
@@ -557,6 +556,9 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 				showOperateNotify(OperateNotify);
 			}
 
+			
+
+			//自动出牌；
 			//加入是否同意的监听按钮，并倒计时
 			//检测是否倒计时之前是否同意出牌
 			//如果同意出牌，则倒计时结束时自动出牌
@@ -750,9 +752,20 @@ bool GameLayer::showOperateNotify(CMD_S_OperateNotify OperateNotify) {
     }
     loadUI("res/BtnGuo.csb", x, y, OperateNotify.cbActionCard);
 
+	m_btnControl->setTouchEnabled(true);
+	m_btnControl->setBright(true);
+	m_pAutoStatusText->setString("模式：自动");
 	AIOperateNotify = OperateNotify;
-	this->scheduleOnce(schedule_selector(GameLayer::autoDealEvent), 1.0f);
-
+	this->scheduleOnce(schedule_selector(GameLayer::autoDealEvent), 5.0f);
+	m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
+		m_AIAutoPlay = false;
+		m_bOperate = true;
+		m_pAutoStatusText->setString("模式：手动");
+		m_pAutoStatusText->setColor(Color3B(255, 0, 0));
+		m_btnControl->setTouchEnabled(false);
+		m_btnControl->setBright(false);
+		this->unschedule(schedule_selector(GameLayer::autoDealEvent));
+	});
     return true;
 }
 

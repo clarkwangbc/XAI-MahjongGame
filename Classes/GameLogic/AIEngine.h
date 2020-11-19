@@ -44,9 +44,7 @@ protected:
     //操作
     void sendCard();
 
-	void updateOnce(int second);
-
-  
+	//void updateOnce(int second);
 
 };
 

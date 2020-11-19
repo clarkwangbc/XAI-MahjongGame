@@ -83,7 +83,9 @@ private:
     bool showSendCard(CMD_S_SendCard SendCard);                                     //发牌显示
     bool showOperateNotify(CMD_S_OperateNotify OperateNotify);                      //显示操作通知
     bool showAndPlayOperateEffect(uint8_t cbViewID,uint8_t cbOperateCode, bool bZm);//播放特效
-    bool showTingResult(const uint8_t cbCardIndex[MAX_INDEX], tagWeaveItem WeaveItem[], uint8_t cbWeaveCount);   //显示听牌的结果
+    bool showTingResult(const uint8_t cbCardIndex[MAX_INDEX], tagWeaveItem WeaveItem[], uint8_t cbWeaveCount);
+
+	//显示听牌的结果
     bool showAndUpdateUserScore(int64_t lGameScoreTable[GAME_PLAYER]);             //更新分数
 
 
