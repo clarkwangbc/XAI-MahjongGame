@@ -554,9 +554,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 				OperateNotify.cbGangCount = SendCard.cbGangCount;
 				memcpy(OperateNotify.cbGangCard, SendCard.cbGangCard, sizeof(OperateNotify.cbGangCard));
 				showOperateNotify(OperateNotify);
-			}
-
-			
+			}			
 
 			//自动出牌；
 			//加入是否同意的监听按钮，并倒计时

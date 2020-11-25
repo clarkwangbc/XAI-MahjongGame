@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-import paramiko
+# import paramiko
 from xml.dom.minidom import parse
 
 # 各种地址
@@ -14,8 +14,8 @@ ai_player_card_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs
 
 game_config_path = "C:/Users/clark/AppData/Local/cocostudio-mahjong/UserDefault.xml"
 
-result_suggestion_path = "C:/Users/clark/MahjongGame/ResultLogs/Suggestion.txt"
-result_explanation_path = "C:/Users/clark/MahjongGame/ResultLogs/Explanation.txt"
+result_suggestion_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Suggestion.txt"
+result_explanation_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Explanation.txt"
 robot_sug_path = "/home/nao/clark-XAI/Results_Sug.txt"
 robot_exp_path = "/home/nao/clark-XAI/Results_Exp.txt"
 
@@ -411,8 +411,17 @@ def test_print(suggestion, explanation, discard=0):
 def normal_discard():
     # 计算
     chu_pai_prob, player_simple_pai, player_origin_pai = chu_pai(player_cards_path)
-    avoid_peng = avoid_pai(ai_card_path)
+    # avoid_peng = avoid_pai(ai_card_path)
+    avoid_peng = []
     chu, suggestion, explanation = contrast_explain(player_origin_pai, player_simple_pai, chu_pai_prob, avoid_peng)
+
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+
+    fo_e = open(result_explanation_path, "w")
+    fo_e.write(explanation)
+    fo_e.close()
 
     return pai_2_int[chu]
 
@@ -424,13 +433,21 @@ def peng_judge_discard():
     max_array = prob_np.argsort()[-4:][::-1]
     discard_pai = player_simple_pai[max_array[0]]
     if discard_pai == player_origin_pai[-1]:
-    	peng = 0
-        # suggestion = "建议不要碰！"
-        # explanation = "碰了后剩下的牌不连续了。"
+        peng = 0
+        suggestion = "建议不要碰！"
+        explanation = "碰了后剩下的牌不连续了。"
     else:
-    	peng = 1
-        # suggestion = "可以碰！碰了后出" + int_2_pai[discard_pai]
-        # explanation = "因为碰了后既可以凑成三个，离胡牌更近一步。"
+        peng = 1
+        suggestion = "可以碰！碰了后出" + int_2_pai[discard_pai]
+        explanation = "因为碰了后既可以凑成三个，离胡牌更近一步。"
+
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+
+    fo_e = open(result_explanation_path, "w")
+    fo_e.write(explanation)
+    fo_e.close()   
 
     return peng, discard_pai
 
@@ -440,23 +457,32 @@ def gang_judge():
     player_origin_pai = read_player_card(player_cards_gang_path)
     gang_card = player_origin_pai[-1]
     if player_origin_pai[-1] not in player_origin_pai[0:-1]:
-    	gang = 1
-        # suggestion = "这里可以要杠。"
-        # explanation = "杠了后增加牌的番数"
+        gang = 1
+        suggestion = "这里可以要杠。"
+        explanation = "杠了后增加牌的番数"
     else:
         origin_score = calc(player_origin_pai[0:-1])
         while gang_card in player_origin_pai:
             player_origin_pai.remove(gang_card)
         gang_score = calc(player_origin_pai)
         if origin_score > gang_score:
-        	gang = 0
-            # suggestion = "这里最好不要杠。"
-            # explanation = "因为杠了后会破坏牌型。"
+            gang = 0
+            suggestion = "这里最好不要杠。"
+            explanation = "因为杠了后会破坏牌型。"
         else:
-        	gang = 1
-            # suggestion = "这里一定要杠。"
-            # explanation = "杠了后既增加牌的番数，又不怎么破坏现有的牌型。"
+            gang = 1
+            suggestion = "这里一定要杠。"
+            explanation = "杠了后既增加牌的番数，又不怎么破坏现有的牌型。"
+
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+
+    fo_e = open(result_explanation_path, "w")
+    fo_e.write(explanation)
+    fo_e.close()
     return gang
+
 
 # AI 出牌
 def ai_normal_discard():

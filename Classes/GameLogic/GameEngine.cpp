@@ -333,8 +333,6 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 				str.append(temp);
 			}
 		}
-
-		// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 		ofstream out_file;
 		out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
 		if (!out_file.is_open()) {
@@ -345,7 +343,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			out_file.close();
 		}
 
-		//判断另外三家的听牌
+		//记录另外三家的听牌
 		std::string ting_str = "";
 		for (int i = 1; i < 4; i++) {
 			uint8_t cbWeaveItemCount = m_cbWeaveItemCount[i];
@@ -367,9 +365,24 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 		ting_out_file << ting_str << endl;
 		ting_out_file.close();
 
-		// 运行python脚本，将结果保存到本地
-		//log("运行Python脚本计算");
-		//PyRun_SimpleString("mahjong_recommender.normal_discard()");
+		//记录弃牌堆数据
+		/*
+		std::string discard_str = "";
+		for (int i = 0; i < 4; i++) {
+			for (int j = 0; j < 34; j++) {
+				if (unsigned(m_cbCardIndex[i][j] != 0))
+				{
+					auto temp =  to_string(unsigned(m_cbCardIndex[i][j])) + ",";
+					discard_str.append(temp);
+				}
+			}
+			discard_str.append("\n");
+		}
+		ofstream discard_out_file;
+		discard_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Discard.txt");
+		discard_out_file << discard_str << endl;
+		discard_out_file.close();
+		*/
 	}
 	else {
 		log("记录机器人手牌");
@@ -774,8 +787,6 @@ bool GameEngine::onUserOperateCard(CMD_C_OperateCard OperateCard)
 					str.append(temp);
 				}
 			}
-
-			// 这里存储下玩家手牌的数据，并将数据保存至指定位置
 			ofstream out_file;
 			out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
 			if (!out_file.is_open()) {
