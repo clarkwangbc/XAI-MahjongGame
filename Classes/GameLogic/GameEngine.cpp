@@ -70,6 +70,7 @@ void GameEngine::init()
         memset(&m_cbPassPeng[i], 0, sizeof(m_cbPassPeng[i]));
         memset(&m_cbDiscardCard[i], 0, sizeof(m_cbDiscardCard[i]));
         memset(&m_WeaveItemArray[i], 0, sizeof(m_WeaveItemArray[i]));
+		m_cbDiscardCount[i] = 0;
     }
 
 	Py_Initialize();
@@ -292,6 +293,22 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
         m_cbDiscardCount[m_cbOutCardUser]++;
         m_cbDiscardCard[m_cbOutCardUser][m_cbDiscardCount[m_cbOutCardUser] - 1] = m_cbOutCardData;
     }
+
+	//记录弃牌堆数据
+
+	std::string discard_str = "";
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < m_cbDiscardCount[i]; j++) {
+			auto temp = to_string(GameLogic::switchToCardIndex(m_cbDiscardCard[i][j])) + ",";
+			discard_str.append(temp);
+		}
+		discard_str.append("$");
+	}
+	ofstream discard_out_file;
+	discard_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Discard.txt");
+	discard_out_file << discard_str << endl;
+	discard_out_file.close();
+
     m_cbTargetUser = 0;                                                          //重置操作人员
     m_cbOutCardData = 0;                                                         //重置出牌数据
     m_cbOutCardUser = INVALID_CHAIR;                                             //重置出牌人员
@@ -365,24 +382,8 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 		ting_out_file << ting_str << endl;
 		ting_out_file.close();
 
-		//记录弃牌堆数据
-		/*
-		std::string discard_str = "";
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 34; j++) {
-				if (unsigned(m_cbCardIndex[i][j] != 0))
-				{
-					auto temp =  to_string(unsigned(m_cbCardIndex[i][j])) + ",";
-					discard_str.append(temp);
-				}
-			}
-			discard_str.append("\n");
-		}
-		ofstream discard_out_file;
-		discard_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Discard.txt");
-		discard_out_file << discard_str << endl;
-		discard_out_file.close();
-		*/
+
+
 	}
 	else {
 		log("记录机器人手牌");
