@@ -39,7 +39,7 @@ void GameOverDlg::showResult() {
         m_pOverResultImage->loadTexture("res/GameOverLayer/result_draw.png");  //流局
     } else {
         //m_pOverResultImage->loadTexture((GameEnd.lGameScore[m_gameUI->m_MeChairID] < 0) ? "res/GameOverLayer/result_lose.png" : "res/GameOverLayer/result_win.png");
-		m_pOverResultImage->loadTexture((GameEnd.cbHuUser != m_gameUI->m_MeChairID) ? "res/GameOverLayer/result_lose.png" : "res/GameOverLayer/result_win.png");
+		m_pOverResultImage->loadTexture((GameEnd.cbHuUser == 1) ? "res/GameOverLayer/result_win.png" : "res/GameOverLayer/result_lose.png");
     }
     //显示牌
     for (uint8_t i = 0; i < m_gameUI->m_GameEngine->getPlayerCount(); i++) {

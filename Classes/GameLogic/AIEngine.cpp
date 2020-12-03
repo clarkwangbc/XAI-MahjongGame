@@ -88,7 +88,7 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
         }
         else
         {
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 1.0f);
         }
     }
     return true;
@@ -176,7 +176,7 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult)
             uint8_t cbTempCardData[MAX_COUNT] = {0};
             GameLogic::switchToCardData(m_cbCardIndex[m_MeChairID], cbTempCardData, static_cast<uint8_t>(MAX_COUNT - 1 - (m_cbWeaveItemCount[m_MeChairID] * 3))); //碰完需要出一张
             m_cbSendCardData = cbTempCardData[0];
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 1.0f);
         }
         break;
     }

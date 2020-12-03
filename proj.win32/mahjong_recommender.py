@@ -415,6 +415,16 @@ def normal_discard():
     avoid_peng = []
     chu, suggestion, explanation = contrast_explain(player_origin_pai, player_simple_pai, chu_pai_prob, avoid_peng)
 
+    #### test
+    fo_card = open('C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/MJRecoGUI/ResultLogs/tmp.txt', 'w')
+    fo_card.write(str(pai_2_int[chu]))
+    fo_card.close()
+
+    fo_sug = open('C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/MJRecoGUI/ResultLogs/Suggestion.txt', 'w')
+    fo_sug.write(suggestion)
+    fo_sug.close()
+    ####
+
     fo_s = open(result_suggestion_path, "w")
     fo_s.write(suggestion)
     fo_s.close()
@@ -449,6 +459,16 @@ def peng_judge_discard():
     fo_e.write(explanation)
     fo_e.close()   
 
+    #### test
+    fo_card = open('C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/MJRecoGUI/ResultLogs/tmp.txt', 'w')
+    fo_card.write(str(discard_pai))
+    fo_card.close()
+
+    fo_sug = open('C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/MJRecoGUI/ResultLogs/Suggestion.txt', 'w')
+    fo_sug.write(suggestion)
+    fo_sug.close()
+    ####
+
     return peng, discard_pai
 
 
@@ -481,6 +501,13 @@ def gang_judge():
     fo_e = open(result_explanation_path, "w")
     fo_e.write(explanation)
     fo_e.close()
+
+    ####
+    fo_s = open(result_suggestion_path, "w")
+    fo_s.write(suggestion)
+    fo_s.close()
+    ####
+
     return gang
 
 

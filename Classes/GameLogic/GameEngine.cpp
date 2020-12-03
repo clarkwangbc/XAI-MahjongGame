@@ -228,41 +228,6 @@ bool GameEngine::onUserOutCard(CMD_C_OutCard OutCard)
 
         m_pIPlayer[i]->getGameEngineEventListener()->onOutCardEvent(SOutCard); //出牌时间
     }
-	
-	//log("记录电脑玩家的手牌");
-	//std::string str = "";
-	//for (int a = 1; a < 4; a = a + 1)
-	//{
-	//	for (int i = 0; i < 34; i++)
-	//	{
-	//		if (unsigned(m_cbCardIndex[a][i] != 0))
-	//		{
-	//			auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[a][i]));
-	//			if (i != 33) {
-	//				temp += ",";
-	//			}
-	//			// strcat(str, temp);
-	//			str.append(temp);
-	//		}
-	//		if (i == 33)
-	//		{ //当前最后一个
-	//			str.append("$");
-	//		}
-	//	}
-	//}
-
-	//// 将数据保存至指定位置
-	//ofstream out_file;
-	//out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/AILog.txt");
-	//if (!out_file.is_open()) {
-	//	log("ERROR: OPEN FILE FAILED");
-	//}
-	//else {
-	//	out_file << str << endl;
-	//	out_file.close();
-	//}
-	//log("电脑玩家手牌保存完毕");
-
 
     bool bAroseAction = estimateUserRespond(m_cbCurrentUser, OutCard.cbCardData, EstimateKind_OutCard); //响应判断
     if (!bAroseAction)
@@ -295,14 +260,28 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
     }
 
 	//记录弃牌堆数据
-
 	std::string discard_str = "";
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < m_cbDiscardCount[i]; j++) {
 			auto temp = to_string(GameLogic::switchToCardIndex(m_cbDiscardCard[i][j])) + ",";
 			discard_str.append(temp);
 		}
-		discard_str.append("$");
+		for (int j = 0; j < m_cbWeaveItemCount[i]; j++) {
+			if (m_WeaveItemArray[i][j].cbWeaveKind == WIK_P) {
+				for (int k = 0; k < 3; k++) {
+					auto temp = to_string(GameLogic::switchToCardIndex(m_WeaveItemArray[i][j].cbCenterCard)) + ",";
+					discard_str.append(temp);
+				}
+					
+			}
+			else if (m_WeaveItemArray[i][j].cbWeaveKind == WIK_G) {
+				for (int k = 0; k < 4; k++) {
+					auto temp = to_string(GameLogic::switchToCardIndex(m_WeaveItemArray[i][j].cbCenterCard)) + ",";
+					discard_str.append(temp);
+				}
+			}			
+		}
+		discard_str.append("\n");
 	}
 	ofstream discard_out_file;
 	discard_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Discard.txt");
@@ -339,7 +318,8 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 	{
 		log("记录玩家手牌");
 		// 这里开始记录玩家的手牌数据
-		std::string str = "";
+		std::string player_cards_str = "";
+		std::string player_ting_str = "";
 		int num = 0;
 		for (int i = 0; i < 34; i++)
 		{
@@ -347,20 +327,56 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			{
 				auto temp = to_string(i) + ":" + to_string(unsigned(m_cbCardIndex[0][i])) + ",";
 				num += unsigned(m_cbCardIndex[0][i]);
-				str.append(temp);
+				player_cards_str.append(temp);
+
+				// 玩家的听牌表
+				uint8_t cbTingCard[MAX_INDEX];
+				memset(&cbTingCard, 0, sizeof(cbTingCard));
+				uint8_t *cbCardIndex = m_cbCardIndex[0];
+				memcpy(&cbTingCard, cbCardIndex, sizeof(cbTingCard));   //内存拷贝
+				cbTingCard[i]--;   //移除要出的牌进行分析
+				// uint8_t cbWeaveItemCount = m_cbWeaveItemCount[i];
+				// tagWeaveItem *pTagWeaveItem = m_WeaveItemArray[i];
+				tagTingResult tingResult;
+				GameLogic::analyseTingCardResult(cbTingCard, m_WeaveItemArray[0], m_cbWeaveItemCount[0], tingResult);
+				
+				player_ting_str.append(to_string(i));
+				player_ting_str.append(": ");
+				
+				for (int j = 0; j < 34; j++) {
+					if (unsigned(tingResult.cbTingCard[j] != 0)) {
+						auto ting_tmp = to_string(GameLogic::switchToCardIndex(tingResult.cbTingCard[j])) + ",";
+						player_ting_str.append(ting_tmp);
+					}
+				}
+
+				player_ting_str.append("\n");
 			}
 		}
+
+		// 写入玩家的现有手牌
 		ofstream out_file;
 		out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerLog.txt");
 		if (!out_file.is_open()) {
 			log("ERROR: OPEN FILE FAILED");
 		}
 		else {
-			out_file << str << endl;
+			out_file << player_cards_str << endl;
 			out_file.close();
 		}
 
-		//记录另外三家的听牌
+		//写入玩家的听牌表
+		ofstream player_ting_out_file;
+		player_ting_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/PlayerTingLog.txt");
+		if (!player_ting_out_file.is_open()) {
+			log("ERROR: OPEN FILE FAILED");
+		}
+		else {
+			player_ting_out_file << player_ting_str << endl;
+			player_ting_out_file.close();
+		}
+
+		//记录听牌
 		std::string ting_str = "";
 		for (int i = 1; i < 4; i++) {
 			uint8_t cbWeaveItemCount = m_cbWeaveItemCount[i];
@@ -369,21 +385,20 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 			tagTingResult tingResult;
 			GameLogic::analyseTingCardResult(cbCardIndex, pTagWeaveItem, cbWeaveItemCount, tingResult);
 
+			auto tmp = "player" + to_string(i) + ": ";
+			ting_str.append(tmp);
 			for (int j = 0; j < 34; j++) {
 				if (unsigned(tingResult.cbTingCard[j] != 0)) {
 					auto ting_tmp = to_string(GameLogic::switchToCardIndex(tingResult.cbTingCard[j])) + ",";
 					ting_str.append(ting_tmp);
 				}
 			}
-			// cout << tingResult.cbTingCount << endl;
+			ting_str.append("\n");
 		}
 		ofstream ting_out_file;
-		ting_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/AITingResult.txt");
+		ting_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/TingResult.txt");
 		ting_out_file << ting_str << endl;
 		ting_out_file.close();
-
-
-
 	}
 	else {
 		log("记录机器人手牌");
