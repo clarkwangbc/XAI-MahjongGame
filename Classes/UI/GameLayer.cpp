@@ -575,10 +575,10 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			{
 				PyObject * pModule = NULL; //声明变量
 				PyObject * pFunc = NULL; // 声明变量
-				pModule = PyImport_ImportModule("mahjong_recommender");
+				pModule = PyImport_ImportModule("mj_recommender");
 				if (pModule)
 				{
-					pFunc = PyObject_GetAttrString(pModule, "normal_discard");//这里是要调用的函数名
+					pFunc = PyObject_GetAttrString(pModule, "normal_out");//这里是要调用的函数名
 					PyObject* pArgs = PyTuple_New(0);
 					PyObject* pRet = NULL;
 					pRet = PyObject_CallObject(pFunc, pArgs);//调用函数
