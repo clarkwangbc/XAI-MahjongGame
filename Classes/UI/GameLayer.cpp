@@ -609,7 +609,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 				}
 			}
 		
-			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 5.0f);
+			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 10.0f);
 			m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
 				m_AIAutoPlay = false;
 				m_bOperate = true;
