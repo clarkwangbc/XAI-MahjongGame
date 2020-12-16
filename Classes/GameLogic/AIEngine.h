@@ -44,7 +44,8 @@ protected:
     //操作
     void sendCard();
 
-	//void updateOnce(int second);
+	void delayReact(int second);
+	void delayZero();
 
 };
 

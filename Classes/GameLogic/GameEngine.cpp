@@ -76,6 +76,7 @@ void GameEngine::init()
 	Py_Initialize();
 	log("初始化Python环境");
 	PyRun_SimpleString("import mahjong_recommender");	
+	PyRun_SimpleString("import mj_recommender");
 
 }
 
@@ -399,6 +400,7 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
 		ting_out_file.open("C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/TingResult.txt");
 		ting_out_file << ting_str << endl;
 		ting_out_file.close();
+		
 	}
 	else {
 		log("记录机器人手牌");
@@ -492,7 +494,8 @@ bool GameEngine::dispatchCardData(uint8_t cbCurrentUser, bool bTail)
     for (uint8_t i = 0; i < GAME_PLAYER; i++)
     {
         m_pIPlayer[i]->getGameEngineEventListener()->onSendCardEvent(SendCard); //出牌数据只发送给当前玩家(网游不能这么发牌，网游其他人的cbCardData要重置防止 透视挂)
-    }
+
+	}
     return true;
 }
 

@@ -85,10 +85,11 @@ bool AIEngine::onSendCardEvent(CMD_S_SendCard SendCard)
             OperateNotify.cbGangCount = SendCard.cbGangCount;
             memcpy(OperateNotify.cbGangCard, SendCard.cbGangCard, sizeof(OperateNotify.cbGangCard));
             onOperateNotifyEvent(OperateNotify);
+			
         }
         else
         {
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 1.0f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
         }
     }
     return true;
@@ -142,6 +143,8 @@ bool AIEngine::onOperateNotifyEvent(CMD_S_OperateNotify OperateNotify)
         OperateCard.cbOperateCode = WIK_P;
         OperateCard.cbOperateCard = OperateNotify.cbActionCard;
     }
+	//DelayCall::add([this]() { delayZero(); }, 20.0f);
+	//delayReact(5);
     return m_GameEngine->onUserOperateCard(OperateCard);
 }
 
@@ -176,7 +179,7 @@ bool AIEngine::onOperateResultEvent(CMD_S_OperateResult OperateResult)
             uint8_t cbTempCardData[MAX_COUNT] = {0};
             GameLogic::switchToCardData(m_cbCardIndex[m_MeChairID], cbTempCardData, static_cast<uint8_t>(MAX_COUNT - 1 - (m_cbWeaveItemCount[m_MeChairID] * 3))); //碰完需要出一张
             m_cbSendCardData = cbTempCardData[0];
-            DelayCall::add([this]() { sendCard(); }, time(NULL) % 2 + 1.0f);
+            DelayCall::add([this]() { sendCard(); }, time(NULL) % 5 + 1.0f);
         }
         break;
     }
@@ -278,8 +281,8 @@ void AIEngine::sendCard()
 		
 }
 
-/*
-void  AIEngine::updateOnce(int second)
+
+void  AIEngine::delayReact(int second)
 {
 	time_t start_time, cur_time;//定义时间变量
 	time(&start_time); //获取time_t类型的开始时
@@ -288,4 +291,14 @@ void  AIEngine::updateOnce(int second)
 		time(&cur_time);
 	} while ((cur_time - start_time) < second);
 }
-*/
+
+void  AIEngine::delayZero()
+{
+	time_t start_time, cur_time;//定义时间变量
+	time(&start_time); //获取time_t类型的开始时
+	//获取time_t类型的时间，结束时间减去开始时间小于给定的时间则退出循环
+	do {
+		time(&cur_time);
+	} while ((cur_time - start_time) < 0);
+}
+

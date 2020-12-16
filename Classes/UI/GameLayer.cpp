@@ -17,7 +17,8 @@
 
 using namespace std;
 
-static uint8_t USER_OP_MAX_TIME = 10; // 出牌倒计时秒数
+static uint8_t USER_OP_MAX_TIME = 10; // 玩家出牌倒计时秒数 
+static uint8_t MORE_OP_MAX_TIME = 5; // 自动出牌倒计时秒数 
 
 GameLayer::GameLayer()  : IDialog() {
     RegDialogCtrl("Button_Exit", m_btnExit);
@@ -73,7 +74,7 @@ void GameLayer::onUILoaded() {
         // 游戏设置按钮
         DialogManager::shared()->showDialog(SettingDlg::create());
     });
-
+	m_btnControl->setVisible(false);
 	m_btnControl->setTouchEnabled(false);
 	m_btnControl->setBright(false);
 
@@ -193,14 +194,6 @@ bool GameLayer::onOutCardEvent(CMD_S_OutCard OutCard) {
     }
     switch (cbViewID) {
         case 0: {
-			//DialogManager::shared()->showDialog(ConfidenceDlg::create());
-			//用户出牌记录
-			ofstream fCardLog;
-			std::string filename = GameConfig::getInstance()->m_ParticipantId + "_cardlog.txt";
-			std::string log_path = "C:/Users/clark/MahjongGame/UserLogs/" + filename;
-			fCardLog.open(log_path, ios::app);
-			fCardLog << ((OutCard.cbOutCardData & MASK_COLOR) >> 4) * 9 + (OutCard.cbOutCardData & MASK_VALUE) << endl;
-			fCardLog.close();
             showAndUpdateHandCard();                     //更新手上的牌
             ui::Layout *pRecvCardList = dynamic_cast<ui::Layout *>(UIHelper::seekNodeByName(m_PlayerPanel[cbViewID], utility::toString("RecvHandCard_0")));
             pRecvCardList->removeAllChildren(); //移除出牌位置的牌
@@ -566,6 +559,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 			m_AIAutoPlay = true;
 
 			//添加切换按钮
+			m_btnControl->setVisible(true);
 			m_btnControl->setTouchEnabled(true);
 			m_btnControl->setBright(true);
 			m_pAutoStatusText->setString("模式：自动");
@@ -605,20 +599,25 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 								child->setPosition(m_startVec + Vec2(0, m_outY));
 							}
 						}
-					}					
+					}
 				}
 			}
-		
-			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), 10.0f);
+			
+			this->scheduleOnce(schedule_selector(GameLayer::naoSpeak), 1.0f);
+			this->scheduleOnce(schedule_selector(GameLayer::autoOutCard), static_cast<float>(USER_OP_MAX_TIME)); // 延迟出牌
+			
 			m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
+				m_iOutCardTimeOut = MORE_OP_MAX_TIME; //重置计时器
 				m_AIAutoPlay = false;
 				m_bOperate = true;
 				m_pAutoStatusText->setString("模式：手动");
 				m_pAutoStatusText->setColor(Color3B(255, 0, 0));
+				m_btnControl->setVisible(false);
 				m_btnControl->setTouchEnabled(false);
 				m_btnControl->setBright(false);
 				this->unschedule(schedule_selector(GameLayer::autoOutCard));
 			});
+
             break;
         }
         case 1:
@@ -626,6 +625,7 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
         case 3:
         default:
             m_bOperate = false;  //不允许操作
+			m_btnControl->setVisible(false);
 			m_btnControl->setTouchEnabled(false);
 			m_btnControl->setBright(false);
 			m_pAutoStatusText->setString("模式：自动");
@@ -651,6 +651,14 @@ bool GameLayer::showSendCard(CMD_S_SendCard SendCard) {
 */
 void GameLayer::autoOutCard(float f) {
 	m_GameEngine->onUserOutCard(AIOutCard);
+}
+
+
+/*
+* 机器人说话
+*/
+void GameLayer::naoSpeak(float f) {
+	PyRun_SimpleString("mj_recommender.nao_speak()");
 }
 
 
@@ -749,17 +757,21 @@ bool GameLayer::showOperateNotify(CMD_S_OperateNotify OperateNotify) {
         x -= 160.0f;
     }
     loadUI("res/BtnGuo.csb", x, y, OperateNotify.cbActionCard);
-
+	
+	m_btnControl->setVisible(true);
 	m_btnControl->setTouchEnabled(true);
 	m_btnControl->setBright(true);
 	m_pAutoStatusText->setString("模式：自动");
 	AIOperateNotify = OperateNotify;
-	this->scheduleOnce(schedule_selector(GameLayer::autoDealEvent), 5.0f);
+	m_iOutCardTimeOut = USER_OP_MAX_TIME; //重置计时器
+	this->scheduleOnce(schedule_selector(GameLayer::autoDealEvent), static_cast<float>(USER_OP_MAX_TIME));
 	m_btnControl->addClickEventListener([this](Ref* sender) { // 如果监听到用户点击按钮，则切换到手动模式
+		m_iOutCardTimeOut = MORE_OP_MAX_TIME; //重置计时器
 		m_AIAutoPlay = false;
 		m_bOperate = true;
 		m_pAutoStatusText->setString("模式：手动");
 		m_pAutoStatusText->setColor(Color3B(255, 0, 0));
+		m_btnControl->setVisible(false);
 		m_btnControl->setTouchEnabled(false);
 		m_btnControl->setBright(false);
 		this->unschedule(schedule_selector(GameLayer::autoDealEvent));

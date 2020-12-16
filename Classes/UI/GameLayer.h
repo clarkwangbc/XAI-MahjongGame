@@ -66,6 +66,7 @@ public:
     void onCardTouch(Ref *ref, ui::Widget::TouchEventType eventType);   //触摸牌的事件
 
 	void autoOutCard(float f);
+	void naoSpeak(float f);
 	void autoDealEvent(float f);
 
 private:

@@ -3,6 +3,8 @@
 import pandas as pd
 import numpy as np
 import json
+import random
+from naoqi import ALProxy
 
 # 分别载入三张概率表，分别对应普通牌（万，筒，条），风牌（东、西、南、北），和键牌（中、发、白）
 prob_normal = pd.read_csv("mahjong_tables/mahjong_normal.csv")
@@ -204,20 +206,20 @@ def need_card_single(card_code):
     if card_code == 0:
         return {"num": 0, "pai": 0}
     else:
-        table = ting_normal[(ting_normal["pai"] == card_code) & (ting_normal["cha_num"] < 3)]
+        table = ting_normal[(ting_normal["pai"] == card_code) & (ting_normal["cha_num"] < 2)]
         table_1 = table[(table["cha_num"] == 0) & (table["jiang"] == 0)]
         table_2 = table[(table["cha_num"] == 0) & (table["jiang"] == 1)]
-        table_3 = table[(table["cha_num"] == 1) & (table["jiang"] == 0)]
-        table_4 = table[(table["cha_num"] == 1) & (table["jiang"] == 1)]
+        # table_3 = table[(table["cha_num"] == 1) & (table["jiang"] == 0)]
+        # table_4 = table[(table["cha_num"] == 1) & (table["jiang"] == 1)]
 
         if len(table_1) != 0:
             return {"num": 1, "pai": decode_card(table_1.iat[0, 3])}
         elif len(table_2) != 0:
             return {"num": 1, "pai": decode_card(table_2.iat[0, 3])}
-        elif len(table_3) != 0:
-            return {"num": 2, "pai": decode_card(table_3.iat[0, 3])}
-        elif len(table_4) != 0:
-            return {"num": 2, "pai": decode_card(table_4.iat[0, 3])}
+        # elif len(table_3) != 0:
+        #     return {"num": 2, "pai": decode_card(table_3.iat[0, 3])}
+        # elif len(table_4) != 0:
+        #     return {"num": 2, "pai": decode_card(table_4.iat[0, 3])}
         else:
             return {"num": -2, "pai": []}  # 表示本牌在2张以内都无法听牌
 
@@ -477,7 +479,8 @@ def select_explain(info):
     key2 = info.keys()[1]
     if info[key1]["is_in_avoid"] > info[key2]["is_in_avoid"]:
         # 若key1点炮，key2不点炮
-        suggestion = "建议出" + int_2_pai[key2] + "。"
+        suggestion = "推荐的牌有" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                     "。但是" + int_2_pai[key2] + "更好一点。"
         contrast_explanation = (contrast_explanation +
                                 "下列的两张牌均是对获胜概率提升最大的出牌。但是" +
                                 int_2_pai[key1] +
@@ -486,7 +489,8 @@ def select_explain(info):
 
     elif info[key1]["is_in_avoid"] < info[key2]["is_in_avoid"]:
         # 若key2点炮，key1不点炮
-        suggestion = "建议出" + int_2_pai[key1] + "。"
+        suggestion = "推荐" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                     "。但建议出" + int_2_pai[key1] + "。"
         contrast_explanation = (contrast_explanation +
                                 "下列的两张牌均是对获胜概率提升最大的出牌。但是" +
                                 int_2_pai[key2] +
@@ -497,7 +501,8 @@ def select_explain(info):
         # 若key1和key2均不点炮（key1和key2均点炮的情况不太可能发生）
         if info[key1]["is_ting"] > info[key2]["is_ting"]:
             # key1听牌，key2不听牌
-            suggestion = "我选择出" + int_2_pai[key1] + "。"
+            suggestion = "可以考虑" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                         "。但我跟偏向" + int_2_pai[key1] + "。"
             contrast_explanation = (contrast_explanation +
                                     "下面两张牌都是根据概率计算推荐的出牌，但是出" +
                                     int_2_pai[key1] +
@@ -506,7 +511,8 @@ def select_explain(info):
 
         elif info[key1]["is_ting"] < info[key2]["is_ting"]:
             # key2听牌，key1不听牌
-            suggestion = "应该出" + int_2_pai[key2] + "。"
+            suggestion = "推荐" + int_2_pai[key1] + "和" + int_2_pai[key2] + \
+                         "。但我觉得出" + int_2_pai[key2] + "更好。"
             contrast_explanation = (contrast_explanation +
                                     "下面两张牌都是根据概率计算推荐的出牌，但是出" +
                                     int_2_pai[key2] +
@@ -515,10 +521,11 @@ def select_explain(info):
 
         elif (info[key1]["is_ting"] == info[key2]["is_ting"]) & info[key1]["is_ting"]:
             # 两张牌都听牌
-            contrast_explanation = contrast_explanation + "出掉以下两张牌后就可以听牌了。"
+            contrast_explanation = contrast_explanation + "出掉这两张牌后即可听牌。"
             if info[key1]["left_cards_num"] > info[key2]["left_cards_num"]:
                 # key1听牌的数量大于key2
-                suggestion = "我觉得出" + int_2_pai[key1] + "。"
+                suggestion = "推荐" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                             "。不过我觉得出" + int_2_pai[key1] + "好。"
                 contrast_explanation = (contrast_explanation +
                                         "出掉" + int_2_pai[key1] +
                                         "后，可以摸" + array_2_card(info[key1]["left_cards"]) +
@@ -529,7 +536,8 @@ def select_explain(info):
 
             elif info[key1]["left_cards_num"] < info[key2]["left_cards_num"]:
                 # key1听牌的数量大于key2
-                suggestion = "我觉得出" + int_2_pai[key2] + "。"
+                suggestion = "推荐出" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                             "。但我觉得出" + int_2_pai[key2] + "更好。"
                 contrast_explanation = (contrast_explanation +
                                         "出掉" + int_2_pai[key2] +
                                         "后，可以摸" + array_2_card(info[key2]["left_cards"]) +
@@ -542,84 +550,112 @@ def select_explain(info):
                 # 两张牌听牌的数量相等
                 if info[key1]["left_cards_num"] != 0:
                     # 且听牌数量均不为 0， 则比较概率分值。
-                    contrast_explanation = contrast_explanation + "而且出这两张牌后听牌的数量也相同。但是"
+                    contrast_explanation = contrast_explanation + "且听牌的数量相等。"
                 else:
                     # 且听牌数量均为 0， 比较概率分值。
                     contrast_explanation = contrast_explanation + "因为"
 
                 if info[key1]["p"] > info[key2]["p"]:
-                    suggestion = "应该出" + int_2_pai[key1] + "。"
+                    suggestion = "推荐的牌有" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                 "。但" + int_2_pai[key1] + "更好。"
                     contrast_explanation = (contrast_explanation +
-                                            "出" + int_2_pai[key1] +
-                                            "获胜的概率更大。")
+                                            "但出" + int_2_pai[key1] +
+                                            "获胜的机会更大。")
                     out_card = key1
 
                 elif info[key1]["p"] < info[key2]["p"]:
-                    suggestion = "应该出" + int_2_pai[key2] + "。"
+                    suggestion = "建议" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                 "。不错出" + int_2_pai[key2] + "更好。"
                     contrast_explanation = (contrast_explanation +
-                                            "出" + int_2_pai[key2] +
+                                            "但出" + int_2_pai[key2] +
                                             "获胜的概率更大。")
                     out_card = key2
 
                 else:
-                    suggestion = "应该出" + int_2_pai[key2] + "。"
+                    suggestion = "可以考虑" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                 "这两张牌各方面都差不多。"
                     contrast_explanation = (contrast_explanation +
                                             "两者概率相同，出哪一张都可以。")
                     out_card = key2
 
         else:
-            # 两张牌都不听牌
-            if info[key1]["left_cards_num"] > info[key2]["left_cards_num"]:
-                # key1所需的牌的数量大于key2
-                suggestion = "推荐出" + int_2_pai[key1] + "。"
+            # 两张牌都不听牌，这时要先考虑概率，再考虑桌面牌剩余。
+            if info[key1]["p"] > (info[key2]["p"] + 0.5):
+                # 如果key1的概率大于key2
+                suggestion = "推荐的牌有" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                             "。但是更建议出" + int_2_pai[key1] + "。"
                 contrast_explanation = (contrast_explanation +
-                                        "出掉" + int_2_pai[key1] + "后，可以考虑摸" +
-                                        array_2_card(info[key1]["left_cards"]) +
-                                        "，牌池中剩余有" + str(info[key2]["left_cards_num"]) +
-                                        "张，比出掉另外一张牌后有更多的进张。")
+                                        "出掉" + int_2_pai[key1]  +
+                                        "后，牌的获胜概率显著大于出掉" +
+                                        int_2_pai[key2] + "。")
                 out_card = key1
-
-            elif info[key1]["left_cards_num"] < info[key2]["left_cards_num"]:
-                # key2所需的牌的数量大于key1
-                suggestion = "推荐出" + int_2_pai[key2] + "。"
+            elif info[key2]["p"] > (info[key1]["p"] + 0.5):
+                # 如果key2的概率大于key1
+                suggestion = "可以考虑" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                             "。不过" + int_2_pai[key2] + "更好一点。"
                 contrast_explanation = (contrast_explanation +
-                                        "出掉" + int_2_pai[key2] + "后，可以考虑摸" +
-                                        array_2_card(info[key2]["left_cards"]) +
-                                        "，牌池中剩余有" + str(info[key1]["left_cards_num"]) +
-                                        "张，比出掉另外一张牌后有更多的进张。")
+                                        "出掉" + int_2_pai[key2]  +
+                                        "后，牌的获胜概率显著大于出掉" +
+                                        int_2_pai[key1] + "。")
                 out_card = key2
-
             else:
-                # 两张牌可以进张的牌数量相当
-                if info[key1]["left_cards_num"] != 0:
-                    # 如果进张牌的数量不为0
-                    contrast_explanation = contrast_explanation + "出这两张牌后可能的进张牌数量差不多。但是"
-                else:
-                    # 如果进张牌的数量为0
-                    contrast_explanation = contrast_explanation + "因为"
-
-                if info[key1]["p"] > info[key2]["p"]:
-                    suggestion = "应该出" + int_2_pai[key1] + "。"
-                    contrast_explanation = (contrast_explanation +
-                                            "出" + int_2_pai[key1] +
-                                            "获胜的概率更大。")
+                # 两者概率接近，则考虑进张的牌
+                contrast_explanation = contrast_explanation + "两张牌在概率上比较接近。"
+                if info[key1]["left_cards"] and info[key2]["left_cards"]:
+                    if info[key1]["left_cards_num"] > info[key2]["left_cards_num"]:
+                        suggestion = "推荐" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                     "。但" + int_2_pai[key1] + "更好。"
+                        contrast_explanation = (contrast_explanation +
+                                                "出" + int_2_pai[key1] + "后，会拥有更大的进张机会。可以摸" +
+                                                array_2_card(info[key1]["left_cards"]) +
+                                                "，这些牌剩余" + str(info[key1]["left_cards_num"]) +
+                                                "张，比出另外一张牌更好。")
+                        out_card = key1
+                    elif info[key2]["left_cards_num"] > info[key1]["left_cards_num"]:
+                        suggestion = "建议" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                     "。但更推荐出" + int_2_pai[key2] + "。"
+                        contrast_explanation = (contrast_explanation +
+                                                "出" + int_2_pai[key2] + "后，会拥有更大的进张机会。可以摸" +
+                                                array_2_card(info[key2]["left_cards"]) +
+                                                "，这些牌剩余" + str(info[key2]["left_cards_num"]) +
+                                                "张，比出另外一张牌更好。")
+                        out_card = key2
+                    else:
+                        out_card = key1
+                        if info[key2]["p"] > info[key1]["p"]:
+                            out_card = key2
+                        suggestion = "可以出" + int_2_pai[key1] + "和" + int_2_pai[key2] + \
+                                     "。这两张差不多。"
+                        contrast_explanation = (contrast_explanation +
+                                                "两张牌差不多，出哪一张都可以。")
+                elif info[key1]["left_cards"] and not info[key2]["left_cards"]:
                     out_card = key1
-
-                elif info[key1]["p"] < info[key2]["p"]:
-                    suggestion = "应该出" + int_2_pai[key2] + "。"
+                    suggestion = "推荐" + int_2_pai[key1] + "或" + int_2_pai[key2] + \
+                                 "。但" + int_2_pai[key1] + "更好。"
                     contrast_explanation = (contrast_explanation +
-                                            "出" + int_2_pai[key2] +
-                                            "获胜的概率更大。")
+                                            "出" + int_2_pai[key1] + "后，会拥有更多的进张机会。可以摸" +
+                                            array_2_card(info[key1]["left_cards"]) +
+                                            "这些牌。而出另外一张则没有较好可以进张的牌")
+                elif info[key2]["left_cards"] and not info[key1]["left_cards"]:
                     out_card = key2
-
+                    suggestion = "可以出" + int_2_pai[key1] + "或" + int_2_pai[key2] +\
+                                 "。但是出" + int_2_pai[key2] + "更好。"
+                    contrast_explanation = (contrast_explanation +
+                                            "出" + int_2_pai[key2] + "后，会拥有更多的进张机会。可以摸" +
+                                            array_2_card(info[key2]["left_cards"]) +
+                                            "这些牌。而出另外一张则没有较好可以进张的牌")
                 else:
-                    suggestion = "应该出" + int_2_pai[key2] + "。"
+                    out_card = key1
+                    suggestion = "推荐" + int_2_pai[key1] + "或" + int_2_pai[key2] +\
+                                 "这两张牌出哪张都可以。"
                     contrast_explanation = (contrast_explanation +
-                                            "两者概率相同，出哪一张都可以。")
-                    out_card = key2
+                                            "两张牌各方面相似，出任意一张即可。")
 
     # 编辑deductive
+    random_sug = ["我觉得出", "出", "建议出", "我推荐", "应该出", "我认为应该出"]
+    de_suggestion = ""
     if out_card != -1:
+        de_suggestion = random_sug[random.randint(0, 5)] + int_2_pai[out_card]
         if info[out_card]["is_ting"]:
             deductive_explanation = (deductive_explanation +
                                      "出掉这张牌后即可听牌，可以听的牌有" +
@@ -639,6 +675,7 @@ def select_explain(info):
 
     return {"out_card": out_card,
             "suggestion": suggestion,
+            "de_suggestion": de_suggestion,
             "deduction": deductive_explanation,
             "contrast": contrast_explanation,
             "card_info": info, }
@@ -653,5 +690,13 @@ def normal_out():
     return result["out_card"]
 
 
-# test
-# print normal_out()
+def nao_speak():
+    suggestion_path = "C:/Users/clark/MahjongGame/XAIMethod-AutoLevel/ResultLogs/Explanation.json"
+    with open(suggestion_path, 'r') as load_f:
+        json_str = load_f.read()
+    if len(json_str) > 0:
+        suggestion = json.loads(json_str)
+        text = suggestion["de_suggestion"].encode("utf8")
+        tts = ALProxy("ALTextToSpeech", "169.254.167.207", 9559)
+        tts.say(text)
+    return
